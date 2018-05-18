@@ -1,0 +1,5 @@
+The paper may include some academic contributions in the tracking
+control method as well as the demonstrations in the hardware in the
+loop simulation. The paper has several unclear points as the reviewers
+specified in their comments. Please follow the comments and revise the
+paper thoroughly. 

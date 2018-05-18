@@ -1,0 +1,91 @@
+Major Contribution of the Paper
+
+The paper has two major contributions:
+1.  Integrated motion planning and tracking strategy for grasping that
+allows the trajectory to be adapted for modeling uncertainties.
+2. Development of an Extended Kalman filter for the video servo that
+makes the controller more robust for grasping.
+
+Organization and Style
+
+The paper is mostly well-organized and clear, but there are some areas
+that could be improved such as the lack of definition of nomenclature
+in Section II.A
+
+Technical Accuracy
+
+The paper seems to be technically accurate, but the development in
+Section III is unclear.  Why is the Chaser in a hardware in the loop
+simulation being driven by enforcing conservation of momentum equations
+rather than sensed forces from the manipulator base?
+
+Another section that is not clear is how the minimization of the cost
+function in Equation (3) is integrated into the motion planner.
+
+Presentation
+
+The presentation is good overall.  There are adequate equations and
+illustrations to understand most of the material, but there are places
+that may rely too heavily on details in the authors' previous work such
+as [12] to understand what is being presented.
+
+Adequacy of Citations
+
+There are adequate citations for the scope of the paper.
+
+
+SPECIFIC COMMENTS:
+
+SECTION I
+Fig. 1:  It is very difficult to see the frames and labels.  Where is
+frame {I}?
+
+SECTION II
+Par. 1:  "dynamics" is misspelled
+Eq. 1:	need to define pitch angle mathematically
+Definition of vpx,py should be separate equation
+Par. 4:  "to phases" should be "two phases"
+Par. 5:
+-H, V are not defined until Section IV before Eq. 5
+-Does the motion of the robot relative to absolute (inertial?) space
+change because of the motion of the Chaser?
+Rigidization Phase:  Does the reference trajectory take into account
+the chaser dynamics, or is that treated as a disturbance?
+Eq. 3:	Where/how is this optimization done and taken into account in
+the motion planner?
+Note:  There are lots of places that should not be indented such as
+following equations 5 & 9.
+After Eq. 12: "measurement has been derived"
+Eq. 17:  How is this tuned?
+Last Par in II.C.1:  What happens if the minimization does get trapped
+in a local minima?
+Also, rephrase next sentence, "with exemplar tracked images from the
+approach ..."
+Is there supposed to be a Section II.C.2? It looks odd to have just C.1
+Eq. 18:  How are Kp and Kd selected?
+
+SECTION III
+Eq. 19:  What is the actual control input to the Chaser?  In previous
+OOS-SIM paper, it mentions a force sensor between the robot base and
+Chaser that was used to control motion of the Chaser, but this method
+seems very different.
+
+SECTION IV
+When exactly does the Rigidization Phase begin -- upon contact or after
+fully grappled?
+What was the visual servo rate?
+Why did the 2 deg/sec case fail?  Was the visual servo rate too slow?
+"smoother" is misspelled.
+Fig. 4:  overlay is hard to see -- can it be a different color?
+Fig. 6 caption:  "For the latter case, only ..."
+last Par:
+"In Fig. 8 ..."
+"Fig. 9 shows ..."
+
+SECTION V
+several misspellings:
+"main achievement"
+"successfully perform"
+"algorithm adopted"
+
+[Please see attached markup for reference.]

@@ -1,0 +1,470 @@
+\section{Introduction}
+% 1,25 pp, including abstract and figure 1
+%
+Among the possible applications of robotic systems in an orbital scenario, this paper focusses on those which may operate in On-Orbit Servicing and in Active Debris Removal missions~\cite{932685}\cite{Shoemaker2003}\cite{dlr63555}\cite{telaar2017gnc}. To tackle the related control challenges we present here an autonomy-based approach, in which the robot is commanded through a precomputed reference trajectory, corrected by a tracking controller, to account for intrinsic planning and execution errors. We focus on the task of grasping a defective, tumbling target satellite (from here on, the Target) by means of a free-floating robot, consisting of a non-actuated chaser satellite (from here on, the Chaser) carrying a kinematically redundant robot manipulator. These are shown in Fig.~\ref{fig:facility}.
+
+The task of grasping a target satellite with a space robot was already performed in \cite{932685} and \cite{Shoemaker2003}, however only for the case of a cooperative Target. When the Target cannot be attitude controlled and does not present \rev{dedicated} visual or structural features to aid its grasping, then it is generally termed non-cooperative. \rev{We consider here the case in which the Target presents a circular rail where it can be grasped, and assume that sufficient information is provided to allow generating a simplified geometric model of it for visual tracking purposes. Also in} this case, the accomplishment of the robotic grasping task in autonomous mode presents some substantial challenges. The robot motion is dictated by that of the Target, which is generally unknown. The robot motion also has to be correctly synchronized with that of the Target, in order to meet and grasp some preselected grasping point on it, while satisfying motion constraints, such as workspace limits, kinematic and dynamic singularities, collision avoidance, as well as sensor-driven constraints, such as camera field-of-view boundaries and pixel velocity limits. Furthermore, due to the given free-floating dynamics in play, the effect of an impact during the contact phase can be very detrimental for accomplishing the task, since it can quickly bring the Target out of the range of the robot.
+
+The grasping task of interest has been addressed extensively in the literature, first in the context of feedback control and then also in that of optimal control (see Section~\ref{sec:related_work}). While in the former the aim is to solve a regulation control problem, often taking advantage of the free-floating dynamics and redundancy of the Chaser, in the latter an open-loop approach is preferred, based on the idea of computing a feasible and optimal trajectory in real-time. Due to the highly constrained task, explained above, the use of a feasible trajectory is recognized to be of great importance.
+\begin{figure}[t!]
+\psfrag{I1}[cc][cc][\FontFigBBB]{{\color{white}$\{\mathcal{I}\}$}}
+\psfrag{t}[cc][cc][\FontFigBBB]{{\color{black}$\{\mathcal{T}\}$}}
+\psfrag{g}[cc][cc][\FontFigBBB]{{\color{black}$\{\mathcal{G}\}$}}
+\psfrag{e}[cc][cc][\FontFigBBB]{{\color{black}$\{\mathcal{E}\}$}}
+\psfrag{b}[cc][cc][\FontFigBBB]{{\color{black}$\{\mathcal{B}\}$}}
+\psfrag{q}[cc][cc][\FontFigBB]{{\color{black}$q$}}
+\psfrag{r}[cc][cc][\FontFigBB]{{\color{black}$r$}}
+\psfrag{g_pose}[cc][cc][\FontFigBB]{{\color{black}$\begin{bmatrix}\eta_t,~ \rho_t \end{bmatrix}$}}
+\psfrag{camera}[cc][cc][\FontFigBB]{{\color{black}$\begin{bmatrix}\mu,~ r_c \end{bmatrix}$}}
+\psfrag{c_pose}[cc][cc][\FontFigBB]{{\color{black}$\begin{bmatrix}\eta_c,~ \rho_c \end{bmatrix}$}}
+\psfrag{t_pose}[cc][cc][\FontFigBB]{{\color{black}$\begin{bmatrix}q,~ r \end{bmatrix}$}}
+\centering\includegraphics[angle=0,width=0.47\textwidth]{./figures/motiv1}
+\caption{OOS-SIM experimental facility used to reproduce the gravity-free dynamics of the Chaser (left), carrying a Light-Weight Robot, and the Target (right). A camera is mounted on the gripper of the kinematically redundant manipulator, to allow visual servoing. The reference frames of the Chaser $\mathcal{B}$, the robot end-effector $\mathcal{\epsilon}$, the Target $\mathcal{T}$ and the predefined grasping point $\mathcal{G}$ are also shown.}
+\label{fig:facility}
+%\vspace{-10pt}
+\end{figure}
+
+A gap in the methodology described above, which we want to close here, is that of having both the optimal control and the feedback control elements working together. A feedback controller alone does not provide any guarantee of convergence, given the presence of the constraints, which give rise to local minima. Furthermore, the grasping task has a limited time window for its execution and local control methods generally do not ensure finite time convergence. At the same time, an open-loop approach is not robust to modelling errors (e.g., dynamic model) and to contingencies, such as an impact. 
+
+\rev{We therefore present here a tracking controller for executing the grasping task of interest which: firstly, takes as input a reference trajectory from a database, generated off-line with a motion planner in simulation and feasible with respect to all relevant constraints; secondly, superimposes sensor-based corrections to the reference input, to account for the discrepancy between the simulated and the real world. 
+
+To do this, the first phase of the task, the approach phase, is executed by a novel architecture consisting of CHECK a visual servo in a cascade with an impedance controller. The visual servo brings the robot end-effector onto the grasping point on the tumbling Target. It is widely recognized that the robustness of a visual servo is significantly improved against modelling errors when performing tracking rather than regulation~\cite{siciliano2016springer}. The use of robot impedance control is intended to minimize the detrimental effect of an impact between the robot manipulator and the Target. A second novel feature of the controller is in the use of an extended Kalman filter to robustly estimate the pose of the Target throughout the approach motion. The filter is fed with the noisy, low-frequency pose estimates of a model-based visual tracking algorithm, providing higher frequency poses to the tracking controller. The Kalman filter is designed to reduce its computational footprint, in view of an implementation on a realtime system.
+
+In the following rigidization phase of the grasping task, in which the Target is already grasped but needs to be stabilized with respect to the Chaser, the reference trajectory brings the system into a final configuration with decaying velocity, by virtue of the robot manipulator controller's dissipation. The complete tracking control task comprises both these phases in sequence.
+
+In this paper we present the tracking controller just described and its validation on DLR's OOS-SIM robotic facility, shown in Fig.~\ref{fig:facility}. This facility allows reproducing realistic orbital gravity-free dynamics in three-dimensions through hardware-in-the-loop simulation. The success of the controller requires a judicious interplay between the different elements involved: the motion planner, the visual servo (including the Kalman filter and the visual tracking) and the free-floating robot impedance controller. Furthermore, the intrinsic modelling uncertainty in the reference trajectory is handled with on-line adaptation of the trajectory for the rigidization phase. The OOS-SIM facility is used here with a novel momentum-based approach to simulate the post-grasping tumbling motion of the satellite compound.}
+
+The paper is then structures as follows. In the rest of this Section, we present a relevant bibliography and a more detailed problem statement. In Section~\ref{sec:methods} we provide details of the applied methods, while in Section~\ref{sec:results} we present the experimental results and their analysis. In Section~\ref{sec:disc} we provide a discussion as well as our conclusions and views on future work. The mathematical notation is such that scalar constants are written in plain text, scalar variables in italics, vectors, vector arrays and matrices are always bold, coordinates of vector quantities are expressed with the left upper superscript. The right upper superscript $i\:j$ defined the direction of a vector from $i$ to $j$. The twist of a rigid body is generally expressed as $\MatO{\dot{x}}=[v\;\omega]^T$.
+%
+%
+\subsection{Related work}
+\label{sec:related_work}
+%
+Many approaches for grasping a free-tumbling Target mostly focus on feedback control methods~\cite{moosavian2007free}\cite{dlr96736} and momentum control methods~\cite{yoshida2006capture}. In~\cite{aghili2012prediction}, the motion planning problem is solved for the approach phase of the grasping task. The planning is supported by a prediction of the Target's motion, achieved through an extended Kalman filter and noisy pose measurements of a laser camera system. The motion prediction occurs before any motion of the robot and the control strategy does not include a continuous visual feedback. An optimization problem is solved partly analytically and partly numerically, to minimize a penaltly cost, function of four weighted quantities: travel time, distance, line-of-sight angle of the laser camera and robot joint acceleration. %The optimal control for the capturing maneuver is solved in the operational space of the robot manipulator and the robot manipulator kinematics and dynamics are as such not considered. 
+Experiments are conducted on an experimental facility which reproduces the dynamics of the tumbling Target and of a robot manipulator end-effector with an attitude-controlled base. In~\cite{aghili2009optimal} a path planning method is presented for the rigidization phase which follows the grasping. It is assumed that the Chaser is attitude stabilized. As such, an optimal control problem is formulated for the detumbling of the Target to which an external moment is applied, solved analytically for the case of minimum time and zero final velocity.
+
+In~\cite{flores2013optimal} an optimal control problem is solved numerically with nonlinear optimization in joint space, addressing the grasping task under the uncertainty of the initial and final positions of the robot end-effector resulting from tracking sensing data. %The uncertainly is treated with the Markov Chain Monte Carlo method, which provides an approximation of the expected value of the optimal robot trajectory, in function of a given probabiblity distribution for the uncertainty. 
+The method is applied in simulation to a 2D problem, for a fully attitude controlled robotic system. In~\cite{lampariello2013generating} a direct shooting method is used to %the motion planning task is also solved numerically with nonlinear optimization, using a direct shooting method. The problem is 
+treat the grasping problem in 3D, with inclusion of robot joint position and velocities contraints, as well as the Chaser free-floating dynamics. A look-up table approach is presented with which (close to) globally optimal soultions can be retreived in real-time for any possible tumbling state of the Target within a predefined range for the angular velocity. 
+%
+%Hrishik and Nassir
+%Visual Servoing on ETS-VII [Yoshida] and Orbital Express with markers on Target and inverse kinematics resolution (CHECK and expand). One of the first works which included the use of visual servoing in an experimental setup was [Aghili]. Here, the optimal control described in [] was applied on-line under realistic lighting conditions to grasp and stabilize a tumbling target. In [HIT14-timedelayedVS] the grasping task was treated with emphasis on the time delay introduced by the visual servo in the control loop (approximately 500-750ms). The visual servo, which provides pose information between a visual marker on the target and the eye-in-hand camera on the tip of the robot manipulator, was tested on a hardware-in-the-loop robotic facility on ground. The latter consisted of two industrial robots, which emulated the free-floating dynamics of the two satellites, by virtue of a dynamic simulation model (as in [Aghili]). 
+
+%In \cite{Aghili07}, an adaptive EKF variant was developed which used laser- based vision data for parameter and motion estimation. The authors used this variant for a Prediction-based controller in \cite{aghili2012prediction}. 
+In the context of state estimation, apart from the aforementioned contribution in~\cite{aghili2012prediction}, in~\cite{Dubowsky} the authors implemented a filter cascade using range images for Target state and parameter estimation. In \cite{hillenbrand2005motion}, a prediction method was adopted keeping autonomous grasping in focus. In \cite{RIS0}, a closed-loop system was implemented for autonomous target tracking with visual servo and EKF as a part of the incremental inverse-kinematics controller. The idea of visual servoing and position-based impedance control were brought together in \cite{Lippiello} for tasks in which contact with the environment is expected. As such, the aim here was to fuse the visual and joint position to improve the target's pose-estimation and hence improve tracking accuracy. \rev{Regarding the visual tracking,} model-based methods 
+%~\cite{Comport2004, Drummond2002} 
+which exploit robust edge features efficiently, were used in position-based control in~\cite{Drummond2002} \rev{and in on-orbit servicing applications in~\cite{Oumer2015}.} 
+
+%The edge-based method~\cite{Drummond2002} presents a direct and accurate formulation for minimizing the reprojection error from 3D to 2D~\cite{Oumer2015}. 
+%
+%
+%Todos:
+%- A. Flores-Abad et al., Optimal Control of a Space Robot to Approach a Tumbling Object for Capture with Uncertainties in the Boundary Conditions, in 2013 AIAA GNC Conference, 2013: .direction through CoM of sys; .No consideration of the angular momentum management 
+%- see Yang paper in $ICRA2016_VT/LITERATURE$
+%- see Romano paper in $ICRA2016_VT/LITERATURE$
+%- see in $/home/lampo/LITERATURE/PAPERS/Journal_Target_Pi/LITERATURE$ - see Jan Peter's operrational space control paper $Operational_Space_Control_Nakanishi_2008.pdf$ in $ICRA2016_VT/LITERATURE$
+%
+%
+%
+\begin{figure}[t!]
+\centering\includegraphics[angle=0,width=0.42\textwidth]{./figures/Motivation_Image}
+\caption{The motion of the Target grasping point and of the robot end-effector are shwon for the model-based (solid line) and for the true (dotted line) cases.}
+\label{fig:motivation}
+%\vspace{-10pt}
+\end{figure}
+%
+\subsection{Problem statement}
+% 0.5 pp
+%
+In the grasping task of interest we assume that the Target has a known geometry, such that model-based computer vision pose estimation can be used. Its angular rate is limited here to 2 deg/s (due to hardware limitations, the limit for the rigidization phase is set to 1 deg/s). %to provide pose estimates between the Target body reference frame and the robot end-effector frame. 
+The grasping point on the Target is predefined. %We assume that its motion may be predicted for motion planning purposes [isairas2005] %and is limited in the maximum angular rate modulous to 2 deg./s. (due to hardware limitations, the limit for the stabilization phase is 1 deg/s). %We also assume that the dynamic paratemers of the Target are given with some given level of uncertainty (note that these are identified for motion prediction purposes only to an arbitrary constant [isairas2010]).
+%
+The Chaser is not actuated (free-floating) and is initially in the same orbit as that of the Target with zero translational and angular velocities relative to the orbital frame.
+%space robot consists of a 7 DoF robot manipulator mounted on a free-floating base, the latter not having any GNC actuation active during the task execution. We assume here that the grasping point is in reach of the robot for the complete grasping task. As such, we assume that the Chaser station-keeping has placed the Chaser in the same orbit as that of the Target, in the -V-bar direction, see Fig. ???, with an accuracy of ?? cm, ?? deg., ?? cm/s and ?? deg/sec.. The chaser initially has zero momentum (for the general treatment of the case of non-zero initial momentum see [Ale]).
+
+The grasping task itself is commonly divided into three phases: an approach phase, in which the robot end-effector is brought in the vicinity of the moving grasping point of the Target; a tracking phase, in which the end-effector follows the grasping point with the same velocity, while homing in onto it and closing the grasp; a rigidization phase, in which the relative velocity between the Chaser and the Target is brought to rest by a suitable control of the robot manipulator. 
+
+A feasible trajectory to accomplish this task is provided by a motion planner, first described in~\cite{lampariello2013generating} and extended here. The motion planner relies on a prediction of the Target motion, which can be accomplished as described in~\cite{hillenbrand2005motion}~\cite{aghili2012prediction}. However, in order to complete the task, the tracking controller will initially need to deviate from the reference trajectory, given that the latter is model-based and will differ from the real-world conditions. This fact is shown pictorially in Fig.~\ref{fig:motivation}. Note that the gross motion of the motion planner is still maintained, in order to avoid motion constraints such as, for example, a singularity. 
+
+Due to the deviation from the reference trajectory in the approach and tracking phases, the reference trajectory for the rigidization phase is adapted online, such that the deviation in joint space is recovered. This favours the fullfillment of joint position related constraints (collisions avoidance, singularity avoidance) throughout it. 
+%
+%It remains to be shown, as we do here, that the reference trajectory can be used by a tracking controller to accomplish the complete grasping task, to include the stabilization. The assumption is in fact that errors in the reference trajectory for the approach phase are sufficiently small. 
+%
+%If not, the reference trajectory for the stabilization phase may become unfeasible. In fact, while in the approach phase the visual servoing takes care of the necessary trajectory motification, in the stabilization phase, the robot joint controller returns to the reference trajectory, in order to ensure that joint position related constraints (collisions avoidance, singularity avoidance) are fullfilled throughout it. More wil be said about this in Section ???.
+%
+%In this way, by grossly tracking the reference trajectory the feasibility of the complete maneuver is guaranteed. As such, the end time of the stabilization phase need not be minimal, as suggested in [Aghili], since it is sufficient that the system remains in the vicinity of the planned trajectory, and may be chosen following a different cryterion. Minimum energy maneuvers can be considered as a viable alternative, since, as we will see, they are more robust to modelling errors and visual servo inaccuracies.
+%
+%Since we also want to be able to deal with a contingency case, for which an undesired impact between the robot and the Target may occur (CHECK need to demonstrate in experiments?), the feedback control method is based on impedance control. This allows to handle the case of an impact robustly, by suitably tuning the impedance []. Furthermore, the possibility of losing the Target after the impact is further greatly reduced by the visual servo.
+%
+%The aim of the experimental validation includes testing and analysis of the vision guidance (pose estimation), the robot planning, the robot controller, as well as taking imperfect attitude control and robot manipulator control into account. Differently to other works of this kind cited above, due to the macro-micro kinematic structure of our facility, we can include all these elements together in one test environment. Last but not least, the realistic nature of the uncertainty is enhanced in the experimental setup, by the latters's time discretization, time delays, kinematic modelling errors, etcetera. 
+%
+%Motivation for VS: uncertainty coming from motion prediction (+/- 10 cm in real system), LUT approximation (i.e. solution for desired point is not exact, but how much?), robot model uncertainties (<1 cm), robot controller positioning error (+/- 2 cm), GNC positioning error (+/- 5 cm), GNC velocity error (+/- ? cm/s - see DEOS), unmodelled disturbances (?) - need a scaling rationale: test sum of erros on 3m long robot to see what joint error is to be expected and scale error here accordingly, accounting fr nonlinearity, or validate tests in simulation just as much + look for trajectories for which this error is least visible in joint space!
+%
+%\section{Robot autonomy and on-orbit servicing}
+%
+%It is interesting to realize that, as mentioned in Section ??, two different control approaches are foreseable for the grasping task: the telepresence-based and the autonomy-based approaches. The dibate whether one can supersede the other is still open, since both have their benefits and flaws. The first can make use of the operator's intelligence, to include promptness in dealing with unexpected operational conditions and more robustness to adverse lighting conditions. At the same time, the benefit brought by a delayed force reflection (between 30ms and 600ms, for direct and Geo Relay links respectively) to an operator on ground, when executing the grasping of a tumbling Target, is still being investigated upon. Evidence of the difficulty for humans to generally perform this task is already provided in [Aghili's x2], although these used position-controlled robots with low controller sampling rates (check).
+%
+%On the other hand, autonomous systems are often favoured in industry-driven studies (see for example DEOS and eDeorbit) because of different reasons: the high bandwidth requirements of telepresence (DEOS); the fact that the round-trip-time needs to include the operator reaction time, typically taken to be one second, which in the case of a contingency during grasping may be decisive (eDeorbit); the communication window is limited in the case of a direct link, by the limited ground station coverage, as well as by the possibility of occlusion brought about by the same tumbling Target; communication through a geostationary relay satellite may pose hard challenges in the antenna pointing task, if the Chaser is in synchronized flight with the Target (eDeorbit); finally, the autonomous mode guarantees feasibility with respect to the non-intuitive stabilization task, which was not addressed in the telepresence approach to date.
+%
+%+ see arguments from Aghili in favour of autonomy.
+%
+\section{Methods}
+\label{sec:methods}
+%
+In this Section we present the methods used to solve the grasping task, to include elements of the motion planning, the visual-servo with manipulator dynamics, used in the approach and the tracking phases and the joint-position-based tracking control used in the rigidization phase. The control system architecture is shown in Fig.~\ref{fig:blockdiagram}.
+%
+\begin{figure*}
+\psfrag{text_tr}[cc][cc][\FontFigS]{\textbf{Tracking}}
+\psfrag{text_st}[cc][cc][\FontFigS]{\textbf{Rigidization}}
+\psfrag{text_vs}[cc][cc][\FontFigS]{Visual Servo}
+\psfrag{text_pd}[cc][cc][\FontFigS]{\small{\begin{tabular}{@{}l@{}} Compliant\\Controller\\(PD+nullspace\end{tabular}}}
+\psfrag{text_pl}[cc][cc][\FontFigS]{\small{\begin{tabular}{@{}l@{}} Plant\\(Chaser\\+manipulator\\dynamics\end{tabular}}}
+\psfrag{text_mp}[cc][cc][\FontFigS]{{\begin{tabular}{@{}l@{}} Motion\\Synthesizer \end{tabular}}}
+\psfrag{text_js}[cc][cc][\FontFigS]{\small{\begin{tabular}{@{}l@{}} Joint-space\\Rigidization\\controller \end{tabular}}}
+\psfrag{t1}[cc][cc][\FontFigS]{\small{\begin{tabular}{@{}l@{}} Camera\\Vision \end{tabular}}}
+\psfrag{t2}[cc][cc][\FontFigS]{\small{\begin{tabular}{@{}l@{}} EKF\\Observer \end{tabular}}}
+\psfrag{txt_k}[cc][cc][\FontFigS]{\small{\begin{tabular}{@{}l@{}} Kinematics\\(Base/manipulator) \end{tabular}}}
+\psfrag{t4}[cc][cc][\FontFigS]{\small{$\begin{bmatrix}q(t_g)\\ \dot{q}(t_g)\end{bmatrix}$}}
+\psfrag{EKF_out}[cc][cc][\FontFigS]{\small{$\hat{H}_{eg}$}}
+\psfrag{cam}[cc][cc][\FontFigS]{\small{$H_{eg}$}}
+\psfrag{ts}[cc][cc][\FontFigS]{\small{$10$ [Hz]}}
+\psfrag{t_3}[cc][cc][\FontFigS]{\small{$\tau_{rig}$}}
+\psfrag{mp_car}[cc][cc][\FontFigS]{\small{$\begin{bmatrix}H_{eg,ref}\\ V_{eg,ref}\end{bmatrix}$}}
+\psfrag{t_5}[cc][cc][\FontFigS]{\small{$\begin{Bmatrix}V_{e} & \dot{q} & H_{e}(H_b, q) & q\end{Bmatrix}$}}
+\psfrag{mp_joint}[cc][cc][\FontFigS]{\small{$\begin{bmatrix}q_{ref}\\ \dot{q}_{ref}\end{bmatrix}$}}
+\psfrag{vs_out}[cc][cc][\FontFigS]{\small{$\begin{bmatrix}H_{e,des}\\ V_{e,des}\end{bmatrix}$}}
+\psfrag{cc_out}[cc][cc][\FontFigS]{\small{$\begin{bmatrix}\tau_{cart}\\ \tau_{null}\end{bmatrix}$}}
+\psfrag{int}[cc][cc][\FontFigS]{$\int$}
+\psfrag{V_e}[cc][cc][\FontFigS]{\small{$V_e$}}
+\psfrag{H_e}[cc][cc][\FontFigS]{\small{$H_e$}}
+\psfrag{j}[cc][cc][\FontFigS]{\small{$\begin{bmatrix}q\\ \dot{q}\end{bmatrix}$}}
+\psfrag{H_T}[cc][cc][\FontFigS]{\small{$H_t$}}
+\centering\includegraphics[angle=0,width=0.85\textwidth]{./figures/BlockDia11}
+\caption{Control system architecture for tracking or rigidization controllers.}
+\label{fig:blockdiagram}
+\end{figure*}
+%
+%\begin{figure*}
+%\centering\includegraphics[angle=0,width=0.95\textwidth]{./figures/Block_diagram_stabiliz}
+%\caption{Control block diagram for the stabilization phase.}
+%\label{fig:blockdiagram2}
+%\end{figure*}
+%
+%\subsection{Control system architecture - 0,5 pp}
+%
+%A block diagram of the control systems for the approach and tracking phase and for the stabilization phase are shown in Fig.~\ref{fig:blockdiagram} and Fig.~\ref{fig:blockdiagram2} respectively. 
+%
+%\subsubsection{Plant}
+%The plant refers to the free-floating robot, consisting of a free-floating satellite base and a 7 DoF robot manipulator. The only actuators present are those of the robot joints, since the base is assumed to be non-actuated. The sensors include the position and torque sensors of the robot joints and a stereo-camera at the robot end-effector. The satellite states are assumed to be ideal (check).
+%
+%Define reference frames. inertia, body, end-effector, other.
+%
+%\subsubsection{Target}
+%This block represents the simulation of the Target motion, including that of the predefined grasping point on it.
+%
+%\subsubsection{Motion synthesizer}
+%The motion synthesizer receives the reference trajectory from the motion planner and interpolates the desired Cartesian pose and robot configuration in time. Note that this function runs on-board of the Chaser spacecraft, whereas the reference trajectory is generated on ground before the task is executed.
+%
+%\subsubsection{Robot controller and forward kinematics}
+%This is the inner loop of the robot controller, which runs at a sampling time of 1KHz. It containts two elements to control both the Cartesian pose and the joint configuration in null space. The forward kinematics provides the current Cartesian pose of the robot end-effector through a forward kinematics computation. The robot controller then, based on the chosen control strategy (see Section ??), determines the control torques to be applied to the robot. The satellite states are assumed to be ideal (check).
+%
+%\subsubsection{Camera-based motion estimation}
+%This block represents the computer vision algorithm which runs onboard at a slower sampling rate of 10Hz and which provides the current relative pose between the robot end-effector and the Target grasping point (check). 
+%
+%The connections between these blocks constitute the visual servo and will be addressed in Section ?? in detail.
+%
+\subsection{Motion planning and motion synthesizer}
+% - 1 pp
+%
+\subsubsection{Approach and tracking phases}
+The motion planning \rev{problem relating to the approach and tracking phases is formulated as a point-to-point task (with non-zero final velocity) and an inverse differential kinematics task to follow it~\cite{lampariello2013generating}	. Mathematically, the first step can be formulated as the constrained optimal control problem
+\begin{equation}
+\min_{\MatO{q}_1(t)} \Gamma{}_1(\MatO{q}_1(t))
+\end{equation}
+subject to 
+\begin{equation}
+\MatO{M}_{b}\: \MatO{\ddot{x}_{b}} \:+ \:\MatO{C}_{b}\:\MatO{\dot{x}_{b}}\: + \:\MatO{C}_{bm}\:\MatO{\dot{q}}=\:-\MatO{M}_{bm} \: \MatO{\ddot{q}{}_1}
+\label{eq:dyn}
+\end{equation}
+\begin{equation}
+\MatO{h}{}_1(\MatO{q}{}_1, \MatO{\dot{q}{}_1}) \le 0
+\label{eq:const3}
+\end{equation}
+for $0\le t \le t_f{}_1$ and to the boundary conditions
+\begin{equation}
+\MatO{f}{}_1(\MatO{H}_e(t_f{}_1))=0, \: \MatO{g}{}_1(\MatO{x}^e(t_f{}_1))=0
+\label{eq:const5}
+\end{equation}
+\begin{equation}
+\MatO{q}_1(0)=\MatO{q}_1{}_{in}, \MatO{\dot{q}}{}_1(0)=0.
+\label{eq:const1}
+\end{equation}
+The free-floating dynamics of the robot manipulator are given by~\cite[\S 55]{siciliano2016springer}
+\begin{equation} \label{eq_manip_main}
+    \underbrace{\begin{bmatrix}
+    \mathbf{M}_b &     \mathbf{M}_{bm} \\     \mathbf{M}_{bm}^T &     \mathbf{M}_m  \end{bmatrix}}_{M} \underbrace{\begin{bmatrix}
+    \ddot{\mathbf{x}}_b\\\ddot{\mathbf{q}}\end{bmatrix}}_{\dot{V}} + \underbrace{\begin{bmatrix}     \mathbf{C}_b &     \mathbf{C}_{bm} \\     \mathbf{C}_{mb} &     \mathbf{C}_m \end{bmatrix}}_{C} \underbrace{\begin{bmatrix}
+    \dot{\mathbf{x}}_b\\ \dot{\mathbf{q}} \end{bmatrix}}_{V} = \underbrace{\begin{bmatrix}
+    0\\ \mathbf{\tau}
+    \end{bmatrix}}_{\mathcal{F}}
+\end{equation}
+where $    \mathbf{M}_b \in \mathbb{R}^{6\times 6}$, $    \mathbf{M}_{bm} \in \mathbb{R}^{6\times 7}$, $    \mathbf{M}_m \in \mathbb{R}^{7\times 7}$ are the locked, coupled inertia and manipulator inertias respectively for $7$-joint manipulator. $C \in \mathbb{R}^{(6+7)\times(6+7)}$ refers to the whole Coriolis matrix, $\mathbf{\tau} \in \mathbb{R}^7$ are the joint torques, $\dot{\mathbf{x}}_b \in \mathbb{R}^6$ is the twist of the base and $\mathbf{q} \in \mathbb{R}^7$ are the joint positions respectively. (\ref{eq:dyn}) then is an equality constraint stemming from the first line of these equations with a term on the right-hand side for rheonomically driven joints. $t_f{}_1$ is a predefined relative final time. $\Gamma{}_1$ is a predefined cost function. $\MatO{h}{}_1$ include inequality box constraints of type $\MatO{x}_{min} \le \MatO{x}(t) \le \MatO{x}_{max}$, for $\MatO{x}=\{\MatO{q}{}_1, \MatO{\dot{q}}{}_1 \}$.
+
+Functions $\MatO{f}{}_1$ and $\MatO{g}{}_1$ are equality constraints on the final end-effector pose $\MatO{H}_e(t_f{}_1)$ and twist $\dot{\mathbf{x}}_e(t_f{}_1)$ to be in a desired relative non-zero position and orientation with respect to the grasping point and travelling at its velocity. (\ref{eq:const1}) expresses boundary conditions on position and on velocity. 
+
+The cost function is chosen to be the mechanical energy of the robot manipulator, in order to smoothen the solution, i.e.
+\begin{equation}
+\MatO{\Gamma} = \int^{t_f{}_1}_{0} (\MatO{\tau}_1{}^{T}(t) \: \MatO{\dot{q}}_1(t)){}^2 dt.
+\label{eq:cost}
+\end{equation} 
+
+The tracking phase consists of an inverse differential kinematics solution, which is dictated by the motion of the Target. Its duration is defined by the relative time $t_f{}_2 - t_f{}_1$. The same motion constraints apply for this phase as for the previous. During this phase, a constant homing-in velocity brings the end-effector onto the grasping point, closing the gap due to the non-zero relative position at the end of the previous phase. The solution is expressed by $\MatO{q}{}_2(t)$.
+} 
+
+The method in~\cite{lampariello2013generating} is extended here to account for the requirements stemming specifically from the visual tracking. It is in fact required that throughout the approach phase sufficient features of the Target are in view of the camera (e.g., the Target's solar panel on its top suface) and that the pixel velocity in the image remains low. These result in motion constraints, the first of which is treated with an inequality constraint on the pitch angle $\phi{}_{e}$ of the end-effector frame $\mathcal{E}$ \rev{(rotation about its $y$-axis) CHECK} relative to the target frame $\mathcal{T}$ (see Fig.~\ref{fig:facility}), defined as
+\begin{equation}
+\phi{}_{e}{}_2 \leq \phi_{e \: mid}{}_2 + \phi_{e \: delta}{}_2,
+\end{equation}
+where $\phi_{e \: mid}$ is a parameter to define a middle value for $\phi{}_{e}$ and $\phi_{e \: delta}$ is a paremeter which relates to the field-of-view of the camera. 
+
+Defining the pixel velocities in the $x$ and $y$ components of the end-effector frame $\mathcal{E}$ to be ${}^{e}v{}_{px}={}^{e}v{}_{y}{}^{te}\ / {}^{e}r{}_{z}{}^{te}$ \rev{and ${}^{e}v{}_{py}={}^{e}v{}_{x}{}^{te}\ / {}^{e}r{}_{z}{}^{te}$}, inequality constraints are also introduced as
+\begin{eqnarray}
+-\Delta {}^{e}v{}_{px}  \leq {}^{e}v{}_{px} \leq \Delta {}^{e}v{}_{px} \\ 
+-\Delta {}^{e}v{}_{py}  \leq {}^{e}v{}_{py} \leq \Delta {}^{e}v{}_{py},
+\end{eqnarray}
+where $\Delta {}^{e}v{}_{px}$ and $\Delta {}^{e}v{}_{py}$ are parameters which relate to the pixel velocity limits in the camera image. Note that the velocity constraint in~\ref{eq:const5}, not present in~\cite{lampariello2013generating}, contributes to minimizing the pixel velocity, by minimizing the relative velocity between the robot end-effector and the Target.
+
+The output of the motion planner is judiciously defined to account for two important aspects. Firstly, a reference trajectory of the end-effector is provided relative to the grasping point frame $\mathcal{G}$ on the Target, i.e., as homogeneous trasformation $\MatO{H}{}_{ge, ref}(t)$ and twist $\MatO{\dot{x}}{}_{ge, ref}(t)=[{}^{g}v^{ge} \: {}^{g}\omega^{ge}]{}^T(t)$, for $0 \le t \le t_f{}_2$. Note that the end-effector pose is effectively given by $\MatO{H}{}_{ge}=\MatO{H}{}_{gI}\MatO{H}{}_{Ie}$. The tracking controller is designed to track this relative motion. This ensures that any error in $\MatO{H}{}_{gI}$ (Target motion prediction errors) and in $\MatO{H}{}_{Ie}$ (tracking control errors, robot forward kinematic errors) are intrinsically eliminated in following the desired relative motion $[\MatO{H}{}_{ge, ref}](t)$, which is independent of these uncertainties. Note however, that the motion of the robot relative to absolute space, and therefore joint space, will deviate from the motion planning solution. This relates to the second aspect to be considered, namely that a reference trajectory is also provided in the joint space of the robot manipulator, $[\MatO{q}{}_{ref}, \MatO{\dot{q}}_{ref}](t)$. As will be shown in Section~\ref{sec:approach_control}, the tracking control law contains a main term to minimize the Cartesian tracking error and a second term, projected in the null-space of the robot manipulator, to minimize the tracking error in joint space (see (\ref{eq:control_law}) and (\ref{eq:control_law_2})). This is intended to minimize the deviation of the robot motion in joint space from the feasible reference trajectory. The null-space term also cares for the kinematic redundancy of the robot manipulator. 
+
+%The motion planner cannot run online, due to its computational runtimes and to the lack of strict guarantees on convergence time. The motion synthesizer, which runs online, interpolates the outputs defined above, namely $[\MatO{H}{}_{eg, ref}{}_{i}, \MatO{V}{}_{eg, ref}{}_{i}], q_{ref}{}_{i}$, for $0 \leq i\leq N$, where $N$ is the number of output steps of the motion planning solution. 
+%
+\subsubsection{Rigidization phase}
+\label{sec:rigidization}
+%
+The rigidization phase requires bringing the robot joints velocity to zero, while ensuring that the motion constraints are not violated. We solve
+\begin{equation}
+\min_{\MatO{q}{}_{3}(t)} \Gamma{}_{3}(\MatO{q}{}_{3}(t))
+\end{equation}
+subject to 
+\begin{equation}
+\MatO{M}_{b\:mod}\: \MatO{\ddot{x}_{b}} \:+ \:\MatO{C}_{b\:mod}\:\MatO{\dot{x}_{b}}\: + \:\MatO{C}_{bm\:mod}\:\MatO{\dot{q}}=\:-\MatO{M}_{bm\:mod} \: \MatO{\ddot{q}{}_1}
+\label{eq:dyn_mod}
+\end{equation}
+\begin{equation}
+\MatO{q}(t_{0}{}_{3})=\MatO{q}(t_f{}_1+t_{f}{}_{2}),
+\MatO{\dot{q}}(t_{0}{}_{3})=\MatO{\dot{q}}(t_f{}_1+t_{f}{}_{2})
+\label{eq:const2_3}
+\end{equation}
+\begin{equation}
+\MatO{\dot{q}}(t_{0}{}_{3}+t_{f}{}_{3})=\MatO{0}
+\label{eq:const2_4}
+\end{equation}
+\begin{equation}
+\MatO{h}{}_{3}(\MatO{q}{}_{3}(t)) \le \MatO{0}
+\label{eq:const3_3}
+\end{equation}
+where the initial conditions in (\ref{eq:const2_3}) express the dependency on the final conditions of the previous tracking phase. The matrices $\MatO{M}{}_{b\:mod}$, $\MatO{M}_{bm\:mod}$, $\MatO{C}_{b\:mod}$ and $\MatO{C}_{bm\:mod}$ of the free-floating robot dynamics are updated to include the inertial properties of the Target on the end-effector.
+
+In this phase, the offline motion planner provides a reference trajectory in joint space. The  tracking controller here is a joint space controller. The task is to rigidize the compound after the grasp, bringing the relative motion between the two satellites to zero. Given that only internal forces come into play, the angular momentum of the Target is shared with the Chaser and at the end of the maneuver the two satellites tumble with a new angular velocity, function of their total inertia. The cost function is chosen to be the mechanical energy of the robot manipulator, as in~(\ref{eq:cost}), in order to minimize its loads on the joints and on the end-effector. \rev{Due to the small Target tumbling velocities considered, it was found that these loads are very low and do not require relative motion constraints.}
+%\begin{equation}
+%\MatO{\Gamma} = \int^{t_{rf}}_{t_{ri}} (\MatO{\tau}{}^{T}(t) \: \MatO{\dot{q}}(t)){}^{2} dt
+%\label{eq:cost}
+%\end{equation}
+%where $t_{ri}$ $t_{rf}$ are the initial and final times of the motion. 
+
+%
+\rev{
+\subsubsection{Method for the contrained optimization problem}
+
+The optimization problem described above is solved as a nonlinear programming problem (NLP). The inequality constraints $\MatO{h}$ are satisifed at a finite number of $k$ via points. The equality constraints in ~(\ref{eq:dyn}) and ~(\ref{eq:dyn_mod}) are satisfied by numerical integration. As such, the NLP is solved with a single shooting approach, with parameterization of the joint positions in time, i.e., $\MatO{q}_i=\MatO{q}(t,\MatO{p}_i)$, where $\MatO{p}_i$ is a column matrix containing $\text{N}_i$ optimization parameters and $i$ is either 1 or 3. For the approach and for the rigidization problems described above, two parameter sets $\MatO{p}{}_1$ and $\MatO{p}{}_{3}$ result. The NPL is solved with the Sequential Quadratic Programming algorithm from the MOPS library~\cite{MOPS_1}. The numerical integration is performed with an explicit fifth order Runge-Kutta method. }
+
+In the online setting however a modification of the reference trajectory for the ridigization is necessary, to account for the deviation from the reference trajectory in the previous approach phase. Each joint trajectory is parameterized with a uniform B-spline, the parameters of which are the optimization parameters to be found. The solution parameters generated offline are still used to synthesize online a new rigidization trajectory, by modifying them with the measured initial robot manipulator joint states. Let the measured initial position and velocity for a given joint be $q_{0m}$ and $\dot{q}_{0m}$ respectively, and the B-spline parameters $q_i, 1 \leq i \leq N_B$ ($N_B<N and N-N_B are the parameters which satisfy the boundary conditions$). The modified parameters are then taken to be:
+\begin{equation}
+q_{i \: mod} =   q_i +  \left( q_0 - q_{0m} + \frac{\dot{q}_{0m} \: ({t_{rf}}-{t_{ri}})}{N_B} \right) \: \frac{(N_B-i)}{N_B},
+\end{equation}
+where the second term accounts for the initial position deviation $q_0 - q_{0m}$ and the joint velocity at the initial time times the duration of the first B-spline segment, $({t_{rf}}-{t_{ri}})/N_B$, in which the spline cannot be modified. This effectively smoothly brings the joint configuration back to the one planned offline. As such, the fullfilment of the joint position related motion constraints is favoured. The chosen modification of the trajectory could however give rise to an increase in robot joint torques, since it implies pushing the Target onto the predicted trajectory. Note however, that the choice of the cost function and of $t_{rf}$ in Eqn.~(\ref{eq:cost}) minimize these, allowing for a larger margin from their limits.
+%
+%The optimization problem for the stabilization phase was treated in a similar way as the approach phase. The joint states were parameterized with B-slines and provided the initial conditions in position, velocity and acceleration (check) resulting at the end of the tracking phase. The final conditions on the joint states were only expressed for the joint velocities and accelerations, leaving the joint positions open for the optimizer to be determined, in function of the assigned cost function. Note that this point solves an open issue when only implenting a dissipating control law, to stabilize the compound. In fact, doing so firstly does not give any bound on the final position reached at the end of the motion and as such no guarantee that collisions are avoided. Secondly, due to noise in the system, a purely dissipative control law results in a continuously drifting system (check with Marco and add results later?). The number of parameters was increased, for better convergence performace. 
+%
+%Of notice here is also to realise that the choice of parameterizing the robot joints was favoured with respect to that of parameterizing the end-effector trajectory. This is firstly because the robot control needs joint position commands, which in our case are given directly from the solution, without having to revert to an inverse kinematics function, to great advantage of the motion synthesizer (see Section ??). The use of an inverse kinematics function is also generally not advisable for the case that a singularity is met (location not known and function of inertia distribution). In this case, the inverse of the Jacobian is undefined. However, we note that singulatities also provide numerical problems in the presented formulation, due to the fact that even in their vicinity, the joint velocities increase noticeably. The integration of the equations of motion of a free-floating system is very sensitive to large velocities, leading the necessity of an excessively small integrator step size. Check - show example in results?
+%
+%With regars to the cost function, we chose here to minimize the mechanical energy. We propose it as alternative to minimizing the end time given that we track the solution in joint position and as such guarantee the collision avoidance that could arise from any residual relative drif velocity between the two spacecrafts. Although minimizing the mechanical energy requires defining a final time, since the solution would otherwise push the end time to infinity, an arbitrary sensible value can be chosen by the user, after inspection of the first solutions. It is important to stress that the goal of the motion planner is first to provide a feasible solution. The optimality is then used to make the solutions more robust to the uncertainties. Finally, due to the highly nonlinear nature of the problem (check), a global search is performed, in order to find a (close to) global minimum for a given query. Although we do not address the task of generating a look-up table here, for any tumbling state of interest, we revert the reader to [IROSD2013] for further details on this point.
+%
+%21/12/2017: the chosen cost function for the rigidization is the integral of the product $tau*qd$. This is best to option to reduce the effort of the LBR! Only drwaback is that is does not look nice, i.e. the target rotates toward the chaser (did a global search and could not find any better solutions). The integral of the product $F_e*v_e$ could be an interesting alternative (given that it implies a solution where the target slows down along its path, without rotating toward the chaser) to minimize the risk of collision, although we can deal with that.
+%
+%
+%End of current version
+%
+%
+%Explain motion synthesizer - give details of on-line B-spline with on-line modification function of new robot joint states + Phillip, Marco + see how this can work on board for all required outputs to controller! Then explain how Cartesian trajectory could be modified with motion prediction during approach and how resulting cartesian reference trajectory could be perfectly updated to real motion (relative to the base body). But must chose to give preference to joint position error (which neglects target trajectory change, otherwise don't know where will end up) and possible collision avoidance or to Cartesian error and possible end-effector and joint torque error (show how this can grow, for a given trajectory error!). As such minimizing energy gives a smooth solution and as such a more robust solution to prediction errors, since far from the motion boundaries and not on the edge of them (optimal handling of uncertainties on the off-line generated motion plannign solutions). Favoured here avoiding singularities. Furthermore, say that for LBR on OOS-SIM 5 cm error are a lot, but for 3/4 m long arm not. 
+%
+%Say that: The presented method needs to be able to meet strict guarantees on the solution (such as the upper bound on the computation time), for the safety-critical application at hand (software ceritifcation processes also need to be considered). As such, all computations involving optimization algorithms have to be performed off-line on ground. 
+%
+%0. motion planning (Roberto):
+%	v. say that opt. params for Chaser position are very important for good convergence properties - but add params in approach to improve convergence - to do!
+%	vi. say about minimizing joint motion or joint motion in null-space for approach phase - see use of nullspace term in invkin (see dkin2!!!) - to reduce effect of friction in NS dynamics of real robot - talk to Christian.
+%	vii. say that for LBR on OOS-SIM 5 cm error are a lot, but for 3/4 m long arm not.
+%	viii. compare min energy solution to solution from $F_e=K_d * Deltax_dot$ (must implement), for different Chaser/Target mass ratios
+%	ix. do global search for min energy or command given $v_e, omega_e$ to inv-kin to see solution
+%	x. add $q_ddot$($tf_approach$) as parameters to minimize tau($0_tracking$)
+%	xi. compare joint space to cartesian space stabilization solution approaches
+%	x. the problem of extracting the optimal solution from the LUT is not addressed in any more detail here (see IROS 2013)
+%
+%In pp method?
+%In the proposed method, a motion planner provides a reference trajectory to execute the task described above, details of which can be found in [IROS2013]. Of notice it the fact that the method in [IROS2013] is meant to firstly guarantee the feasibility of the task with respect to all motion constraints, described in Section??. This differes from any of the approaches described in Section???, since there many important constraints are either not treated exhaustively (e.g., joint position and velocity, the latter in view of dynamic singularities, the position of which for a ff 3D system with n dof and with load X on e-e cannot be predefined to date), implying that the explicit effect of a disturbance or uncertainty on the future evolution of the system is not taken into account, or only added in the cost function as a weighting term (e.g., line-of-sight of end-effector cameras, for which the useful Target features may be lost, with obviously negative consequences), thus not guaranteeing their fullfillment. Here instead, the method based on nonlinear optimization, guarantees the fullfillment of the constraints for the reference trajectory (at the chosen via points, of arbitrary number, sufficient for the task). Due to the highly non-linear nature of the problem, the presented method also provides a (near to) global optimimum, for a very wide range of cost functions, for example,  minimized for improvement of the robustness of the control method, to model uncertainties and sensor errors, by performing a global search for a given task. The method finally allows to represent the system in question in its full free-floating dynamic behaviour, without the need to reduce the Chaser dynamics to those of a fixed-based robot, for ease of resolution of the related optimal control problem. We will see in Section ??? that the stabilization task is in fact a momentum transfer problem, rather than a detumbling (or passivation?) problem, with useful consequences on the resulting solutions found. The tumbling of the compound after the stabilization is by no means an issue, when realizing that the minimization of the attitude has been solved with simple technological solutions, such as omnidirectional antennas and gymbal joints [DEOS]. The impelling need for robot autonomy for the grasping task was also made evident in [eDeorbit], underlining the need for full autonomy, for which a communication link in the critical grasping phase is not foreseen.
+%+ In the same Figure, the necessity for a motion planner is underlined by showing how this deviates around a robot singularity, rather than going right through it, as a simple regulation controller would do.
+%+ make clear statements about singularities: although inv kin methods can avoid them, we can't tell if the motion after them is then feasible anymore, given non-holonomic nature of Chaser dynamics + if cannot avoid them right during tracking, we have a problem + cannot represent them yet.
+%+ The uncertainties are quantified and analysed here to some extent, to validate the truthfullness of the assumption. 
+%+ This last point has required making a decision between prioritizing position related to force related constraints. The internal forces required for the adjustment of the trajectory in the stabilization phase are function of the tracking error in the approach phase, and as such unknown. The alternative would be to recompute the stabilization trajectory online in cartesian space and tranfer the unknown onto the final position reached by the robot... 
+%+ The feasibility (region) is provided by the motion planner, not by the user [Aghili's ball]. 
+%	
+%
+%
+\subsection{Extended Kalman Filter (Model-based control)}
+The Extended Kalman Filter (EKF) as a nonlinear observer is ubiquitous in all disciplines germane to this paper. It is a nonlinear observer in the sense that the model propagation is nonlinear whereas, the error injection is linear and hence the covariance time-propagation is performed through a linear approximation of the state dynamics. In the context of this paper, the EKF provides robustness to the tracking controller against incoming measurement outliers from the computer vision algorithm by ensuring Lipschitz continuity of the measurement. Due to its predictor-update structure, it also provides a state prediction which allows us to compensate for image-processing time-delays and ensure continuous control errors during occlusion or measurement failures caused by degenerate observability conditions. From a tracking controller perspective, the EKF also estimates the target velocities which can be used as a feed-forward term for the Visual Servo, without which, the controller design is constrained. 
+
+\rek{In the following text, a pose matrix is denoted as, $\mathbf{H} = \begin{bmatrix}R(q) & r\\0_{1,3} & 1\end{bmatrix} \equiv \mathbf{H}(R,r)$, where $q$ and $r$ are the quaternion orientation and the position respectively. The state of the target is defined by its inertial pose, $\mathbf{H}_t = (R(q),r)$ where $q,~r$ are indicated relative to the inertial frame. The measured pose using the vision sensor is the pose of $\mathcal{G}$ relative to $\mathcal{E}$, and is denoted as $\mathbf{H}_{eg}(R(\mu),r_c)$. The forward kinematics of the chaser end-effector is $\mathbf{H}_e(R(\eta_c),\rho_c) = \mathbf{H}_{be}(q)\mathbf{H}_b$. The transformation of the grasping frame $\mathcal{G}$ relative to $\mathcal{T}$ is known from existing satellite model, and is denoted as $\mathbf{H}_{tg}(R(\eta_t),r_t)$. The pose $\mathbf{H}_t$ is driven by a mixed velocity representation $\mathbf{V}_t^m = \begin{bmatrix}\dot{r}\\ \omega^b\end{bmatrix}$, where the superfix $b$ and $m$ denote body and mixed velocity forms \rek{respectively}. The dynamic system \rek{for the EKF} is modeled with the state, \rek{$x_a \in \mathbb{R}^{13} = \begin{bmatrix} q^T& r^T& \omega^{b^T}& \dot{r}^T&\end{bmatrix}^T$} as,}
+
+\begin{align}
+\frac{d}{dt}\begin{bmatrix} \dot{\eta_q} \\ r \\ \omega^b \\ \dot{r}\end{bmatrix} = \begin{bmatrix}\frac{1}{2}\omega^b \otimes \eta_q \\ \dot{r} \\-\omega^b_\times I\omega^b \\ \Phi(n) \end{bmatrix}        \label{eq_SysDyn}
+\end{align}
+where $\otimes$ denotes the quaternion multiplication tensor, $(.)_\times$ denotes the skew-symmetric form of $\mathbb{R}^3$. $\Phi(n)$ is the linear approximation of orbital dynamics given by the Clohessy-Wiltshire equations \rek{\cite{Aghili07}}.
+\rek{\begin{assumption} \label{ass_ignore_clw}
+Since the scope of this paper is limited to an operational time, $T < 20$ [sec], the contribution of the term which accounts for the relative translation motion, and is given by the Clohessy-Wiltshire equations, is neglected.
+Hence, from eq.~\eqref{eq_SysDyn}
+\begin{equation} \label{eq_trans_kin_ass}
+\frac{d}{dt}\begin{bmatrix}r\\ \dot{r} \end{bmatrix} = \begin{bmatrix}0_{3,3} & 1_{3,3}\\ 0_{3,3}& 0_{3,3} \end{bmatrix}\begin{bmatrix}r\\ \dot{r} \end{bmatrix}
+\end{equation}
+\end{assumption}}
+
+\rek{For the quaternion group, $Q$, in the multiplicative variant of the EKF, the quaternion state is maintained as a $3$-component vector as $\delta q_v(a_p) \in T_{\overline{q}}Q$, at a nominal value of the quaternion $\overline{q}$. $T_{\overline{q}}Q$ is the tangent space to the quaternion manifold and $a_p$ is a 3-component parameterization vector.} A detailed \rek{discussion} on such vector expressions was given in \cite{Markley}. In this text, the Modified Rodriguez Parameters (MRP), $a_p$ was chosen \rek{so that singularity is not encountered before angular error $2\pi$}. \rek{The tangent vector $\delta q_v$, the parameterization vector $a_p$ and the quaternion $q = \begin{bmatrix}q_v^T& q_0\end{bmatrix}$ are related as follows},
+\begin{align}
+\rek{a_p(q) = \frac{4}{1+q_0}q_v}\quad,
+\rek{\delta q_v(a_p) = \frac{1}{16}\begin{bmatrix}
+8a_p \\ 16 - a_p^Ta_p
+\end{bmatrix}}
+\end{align}
+The differential form for $a_p$ is given as,
+\begin{align} \label{eq_quat_kin}
+\dot{a}_p = \Big(-\frac{1}{2}\omega_\times + \frac{1}{8}\Big)a_p + \Big(1 - \frac{1}{16}a_p^Ta_p\Big)\omega	 
+\end{align}
+
+
+Among the alternatives for scaled inertia parameterization for zero-torque motion propagation, \cite[\S 4.6]{TweddlePhD} the $3$-parameter form proposed in \cite{Aghili07} is used. So, the angular dynamics can be \rek{written by reformulating the rotational dynamics Euler equation in eq.~\eqref{eq_SysDyn}} as,
+\begin{align} 
+ \dot{\omega} = \psi(\omega) =  \begin{bmatrix}
+ p_x \omega_y \omega_z \\
+  p_y \omega_x \omega_z \\
+   p_z \omega_x \omega_y  
+ \end{bmatrix}
+\end{align} 
+which \rek{has a} linear approximation about the \rek{current} estimate, $\hat{\omega}$ \rek{as},
+\begin{align} \label{eq_lin_rot_dyn}
+	\delta \dot{\omega} = \mathbf{M}\delta{\omega}
+\end{align} where $M = \Big( \frac{\partial \psi(\omega)}{\partial \omega}\Big)_{\omega = \hat{\omega}}$ is a hollow matrix \cite{Aghili07}.
+
+Finally, \rek{using eq.~\eqref{eq_quat_kin}, \eqref{eq_lin_rot_dyn} and eq.~\eqref{eq_trans_kin_ass} from ass.~\ref{ass_ignore_clw},} the linear approximation of the \rek{torque-free} system \eqref{eq_SysDyn} with state $x \in \mathbb{R}^{12} = \begin{bmatrix}a_p^T&r^T&\omega^{b^T}&\dot{r}^T & \end{bmatrix}$ is given in \cite[eq. 4.79]{TweddlePhD} as,
+\begin{align}
+\dot{x} = \mathbf{A}x + \mathbf{B}w
+\end{align}
+Based on Fig.~\ref{fig:facility}, the measurement equation is given as,
+\begin{align}
+y = \begin{bmatrix}
+r_c \\ \mu \end{bmatrix} = \begin{bmatrix}
+\rho_c + R(\eta_c)(r + R(\eta_t)\rho_t) \\
+\eta_t^*\otimes q \otimes \eta_c^*
+\end{bmatrix}
+\end{align}
+\rek{where $(.)^*$ refers to the quaternion inverse.}
+The linear approximation for the measurement was \rek{derived several times before in \cite{Aghili07}, \cite{Dubowsky}, \cite{TweddlePhD}, and we only state the final formula as,}
+\rek{\begin{align}
+y = \mathbf{H}x,~\mathbf{H} = \begin{bmatrix}
+- R(\overline{q})\rho_{t_\times} & 0_{3,3} & 1_{3,3} & 0_{3,3}\\
+ 1_{3,3} &   & & 0_{3,9}
+\end{bmatrix}
+\end{align}}
+\rek{where $\mathbf{H} = \frac{\partial y}{\partial x} \Big|_{x_a = \hat{x}_a}$ is obtained by linear approximation of the measurement function about the current state estimate $\hat{x}_a$}. Since the Kalman Filter equations are standard, we do not explicitly write the prediction-update form. The interested reader is referred to \cite{Kalman} for seminal paper on equations. By using the aforementioned system of equations, the EKF was implemented with the Outlier-rejection (OR) scheme suggested in \cite{Selfpaper} to provide robustness against local outliers from the vision system. \rek{The EKF output $\hat{y} = \begin{bmatrix}r_c^T & \mu^T\end{bmatrix}^T \equiv \hat{\mathbf{H}}_{eg}$ is used for control in the next step.}
+%
+\subsection{Visual Servo for Approach and Tracking Phases}
+\label{sec:approach_control}
+\rek{
+The equation of motion for the free-floating space manipulator is given as, see \cite{Yoshida_1},
+
+CHECK (remove equation and citation from here)
+\begin{equation} \label{eq_manip_main}
+    \underbrace{\begin{bmatrix}
+    \mathbf{M}_b &     \mathbf{M}_{bm} \\     \mathbf{M}_{bm}^T &     \mathbf{M}_m  \end{bmatrix}}_{M} \underbrace{\begin{bmatrix}
+    \ddot{\mathbf{x}}_b\\\ddot{\mathbf{q}}\end{bmatrix}}_{\dot{V}} + \underbrace{\begin{bmatrix}     \mathbf{C}_b &     \mathbf{C}_{bm} \\     \mathbf{C}_{mb} &     \mathbf{C}_m \end{bmatrix}}_{C} \underbrace{\begin{bmatrix}
+    \dot{\mathbf{x}}_b\\ \dot{\mathbf{q}} \end{bmatrix}}_{V} = \underbrace{\begin{bmatrix}
+    0\\ \mathbf{\tau}
+    \end{bmatrix}}_{\mathcal{F}}
+\end{equation}
+where $    \mathbf{M}_b \in \mathbb{R}^{6\times 6}$, $    \mathbf{M}_{bm} \in \mathbb{R}^{6\times n}$, $    \mathbf{M}_m \in \mathbb{R}^{n\times n}$ are the locked, coupled inertia and manipulator inertias respectively for $n$-joint manipulator (non-redundant). $C \in \mathbb{R}^{(6+n)\times(6+n)}$ refers to the whole Coriolis matrix, $\mathbf{\tau} \in \mathbb{R}^n$ are the joint torques, $\dot{\mathbf{x}}_b \in \mathbb{R}^6$ is the velocity of the base and $\mathbf{q} \in \mathbb{R}^n$ are the joint positions respectively.
+
+For the free-floating space manipulator, eq.~\eqref{eq_manip_main} can be reformulated after eliminating terms explicitly depending on $\mathbf{x}_b$ and its derivatives as, 
+\begin{equation}\label{eq_reduced_dyn_js}
+ \hat{\mathbf{M}}_m(\mathbf{q},\mathbf{x}_b)\ddot{\mathbf{q}} + \tilde{\mathbf{C}}_m(\mathbf{q},\dot{\mathbf{q}},\mathbf{x}_b,\dot{\mathbf{x}}_b)\dot{\mathbf{q}} = \mathbf{\tau},  \quad \text{(free-floating model)}
+\end{equation}
+where $\hat{\mathbf{M}}_m = \mathbf{M}_m - \mathbf{M}_{bm}^T\mathbf{M}_b^{-1}\mathbf{M}_{bm}$, $\hat{\mathbf{C}}_b = \mathbf{C}_{mb} - \mathbf{M}_b^{-1}\mathbf{C}_b$, $\tilde{\mathbf{C}}_m= \hat{\mathbf{C}}_m(\mathbf{q},\dot{\mathbf{x}}_b,\dot{\mathbf{q}}) - \hat{\mathbf{C}}_b(\mathbf{q},\dot{\mathbf{x}}_b,\dot{\mathbf{q}})\mathbf{M}_b^{-1}\mathbf{M}_{bm}$, are the generalized terms (see \cite{Nech_Yosh_ff}) and $\hat{\mathbf{C}}_m = \mathbf{C}_m - \mathbf{M}_b^{-1}\mathbf{C}_{bm}$. Using the formulation in \cite[eq. 10]{Ott}, the eq.~\eqref{eq_reduced_dyn_js} can be written only for the Cartesian dynamics as, 
+\begin{equation}
+\mathbf{\Lambda}_m(\mathbf{q},\mathbf{x}_b)\dot{V}_m + \mathbf{\mu}_m(\mathbf{q},\dot{\mathbf{q}},\mathbf{x}_b,\dot{\mathbf{x}}_b)V_m = \mathcal{\mathbf{F}}_m
+\end{equation}
+where $\mathbf{\Lambda}_m = (\mathbf{J}_g(\mathbf{q},{\mathbf{x}}_b)\hat{\mathbf{M}}_m^{-1}\mathbf{J}_g(\mathbf{q},{\mathbf{x}}_b)^T )^{-1}$, $\mathbf{\mu} = \mathbf{J}_g(\mathbf{q},{\mathbf{x}}_b)^{-T}\tilde{\mathbf{C}}_m\mathbf{J}_g(\mathbf{q},{\mathbf{x}}_b) + \mathbf{J}_g(\mathbf{q},{\mathbf{x}}_b)^{-T}\hat{\mathbf{M}}_m\frac{d}{dt}\mathbf{J}_g(\mathbf{q},{\mathbf{x}}_b)^{-1}$ where $\mathcal{\mathbf{F}}_m$ is the Cartesian control torque.}
+
+
+\rek{In the context of On-Orbit Servicing, the target is partially cooperative in that its model is available in advance. As a result, \rek{in this paper, the kinematic-level control used is Position-based Visual Servo (PBVS), which means that the control law uses the pose error $\hat{\mathbf{H}}_{eg}$ that is reconstructed from image-space measurements}. Based on the model-based visual tracking and EKF's \rek{pose} results, this control law is used to provide a velocity and pose for the inner dynamics controller. }
+
+\rek{In accordance to fig.~\ref{fig:blockdiagram}, a kinematic tracking velocity for the manipulator is generated using the visual servo law. Firstly, the reference trajectory is used to compute a desired end-effector pose $\mathbf{H}_{e,des} = (\mathbf{H}_e\hat{\mathbf{H}}_{eg}) \mathbf{H}_{ge,ref}$. Secondly, this function is used as a pose error to construct the visual servo law $\hat{V}_m =\begin{bmatrix}v_m^T  &\omega_m^T\end{bmatrix}^T$. Using the slow-sampled $\hat{V}_m$, a virtual frame is generated as $\dot{\mathbf{H}}_{e,v}(R_{e,v},p_{e,v}) = \Ad_{R_{e,v}}\hat{V}_m,~ \mathbf{H}_{e,v}(n) = \mathbf{H}_e(n) ~\forall n \in [1..k]$ where $n$ is the $n^{th}$ EKF sample time. Therefore, this virtual frame is solved as an initial value problem between two EKF sampling times and acts like an intermediate trajectory for the manipulator between these sampled points. The control law used is, 
+\begin{align} \label{eq_VS_law}
+ \hat{V}_m = K_1 \mathbb{E}(H_{e,v}^{-1}H_{e,des})
+\end{align}
+where $k_{1,ii} > 0, ~\forall~ i \in [1...6]$, $\mathbb{E}$ is the pose error function defined as, $\mathbb{E}(\mathbf{H}(R,p)) = \begin{bmatrix}p^T& \psi^T\end{bmatrix}^T$, with the rotation error $\psi = \frac{1}{2}[R - R^T]^\vee$ and $[a_\times]^\vee = a, ~a\in \mathbb{R}^6$ is the mapping from skew symmetric matrix to vector form. A note on this error formulation and subsequent Lyapunov function analysis can be found in \cite{BULLO199917}. The PBVS command in eq.~\eqref{eq_VS_law} implies that $\hat{V}_m$ is referred in the virtual frame.
+}
+
+\rek{
+Finally, a compliant controller is placed in cascade after the visual servo which acts upon the Cartesian error. The impedance error is a Cartesian error observed in the inertial frame and is denoted as $\mathbf{e} = \mathbb{E}(\mathbf{H}_e^{-1}\mathbf{H}_{e,des})$. Using the corresponding velocity error $\dot{\mathbf{e}}$, a PD+ Cartesian control law is formulated as,
+
+\begin{align}
+\mathbf{\mathcal{F}}_m = \mathbf{\Lambda}_m(\mathbf{q},\mathbf{x}_b)\dot{\hat{V}}_m + \mathbf{\mu}_m(\mathbf{q},\dot{\mathbf{q}},\mathbf{x}_b,\dot{\mathbf{x}}_b){\hat{V}}_m - \mathbf{K}_P\mathbf{e} - \mathbf{K}_D\dot{\mathbf{e}}
+\end{align}
+where $k_{P,ii} > 0$ and $k_{D,ii} > 0, ~\forall~ i \in [1...6]$ are the choices for Cartesian stiffness and damping terms respectively.}
+The corresponding joint torques with null-space control torque $\mathbf{\Gamma}$ are given as,
+\begin{equation}
+\mathbf{\tau} = \mathbf{J}_g^T\mathbf{\mathcal{F}}_m + (\mathbf{1}_{n,n}-{\mathbf{J}_g}^T\mathbf{J}_g^{*^T})\mathbf{\Gamma}
+\label{eq:control_law}
+\end{equation}
+where $\mathbf{J}_g^{*}$ is the dynamically consistent Weighted Pseudo-inverse of $\mathbf{J}_g$ (generalized Jacobian) and $\Gamma$ is given by
+\begin{equation}
+\Gamma = -\MatO{K}_{PN} (\mathbf{q} - \mathbf{q}_{ref}) - \MatO{K}_{DN}  (\dot{\mathbf{q}} - \dot{\mathbf{q}}_{ref} )
+\label{eq:control_law_2}
+\end{equation}
+\rev{where the two terms on the right hand side are a stiffness and damping terms respectively, with constant diagonal gain matrices $\MatO{K}_{PN}$ and $\MatO{K}_{DN}$.}
+
+~\rev{In eq.~\ref{eq:control_law_2}, the two terms on the left hand side are a stiffness and damping terms for the null-space respectively, with constant diagonal gain matrices $\MatO{K}_{PN},~k_{PN,ii} > 0$ and $\MatO{K}_{DN},~k_{DN,ii} > 0, ~\forall~i \in [1...7]$. 
+
+Note that the use of $ \MatO{J}_{g}$ ensures that the Cartesian and null-space coordinates are decoupled in the inertia matrix. However Coriolis/Centrifugal matrix remains coupled \cite[eq. 10]{Ott}. This coupling is argued in \cite[pp. 2001]{Ott} to be of minor importance in practice. The validity of the reference trajectory guarantees that the null-space projection in eq.~\ref{eq:control_law} is not null. However, as shown in Fig.~\ref{fig:motivation}, uncertainties in the reference trajectory require departing from it in inertial space, but not relative to the target. As such, the null-space term will not converge but only minimize the error as $\text{min}_{f(q) = \mathbf{H}_{e,des}}||\mathbf{q} - \mathbf{q}_{ref}||_2$, where $f({q})$ is the forward kinematics function.}
+
+%
+%
+%
+% Hrishik
+% Describe rational and method (equations) of visual servo
+% Describe KF method, refer to existing literature (ASTRA?)
+%
+% Roberto
+% Describe LWR impedance controller
+% Describe null-space controller
+%
+%1. Control Visual Servo Approach (Hrishik, Roberto)
+%        -i. describe how to command the planned trajectory to the visual servo (optimization offline on ground, what is done on-line on board?), such that it is grossely followed, both in Cartesian and in joint space, but at the same time corrected by the feedback controller, to account for modelling errors and other uncertainties.
+%	0. The visual servo is described in detail, to include tuning of an inner-loop impedance controller with an outer-loop visual servo, in the approach and tracking phase.
+%	i. updated DEOS block diagram (position and impedance control), feedforward term, other
+%	ii. inputs from path planner - e-e trajectory, configuration trajectory for null space, other
+%	iii. theory for tracking of relative motion
+%	iv. theory for tracking of null-space -ask Christian/Alin
+%	v. visual servo (computer vision, visual servoing)
+%	vi. robot control method for ff robot (Jg) and tracking control; what is maximum allowed impedance of LWR?
+%	vii. use of KF with preidentified model parameters, for CV failure (e.g., due to occlusions)
+%	viii. The satellite states are assumed to be ideal - check which are needed: $r0, v0, ori_0, omega_0$, sampling time (3 Hz, 1 kHz), other
+%	
+

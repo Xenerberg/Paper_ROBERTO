@@ -1,0 +1,3 @@
+AttachmentToReview35079Of18-0522v1.pdf: Criticism about the novelty and academic contribution. Roberto will correct for the 'vague' comment. We will have to come up with a strong rebuttal. 
+Implement tracking controllers for Joint space/cartesian space.
+Maybe, implement a new Kalman Filter.

@@ -1,0 +1,164 @@
+\begin{thebibliography}{10}
+
+\bibitem{932685}
+T.~Imaida, Y.~Yokokohji, T.~Doi, M.~Oda, and T.~Yoshikwa, ``Ground-space
+  bilateral teleoperation experiment using ets-vii robot arm with direct
+  kinesthetic coupling,'' in {\em Proceedings 2001 ICRA. IEEE International
+  Conference on Robotics and Automation}, vol.~1, pp.~1031--1038 vol.1, 2001.
+
+\bibitem{Shoemaker2003}
+M.~W. {James Shoemaker}, ``Orbital express space operations architecture
+  program,'' 2003.
+
+\bibitem{dlr63555}
+F.~Sellmaier, T.~Boge, J.~Spurmann, S.~Gully, T.~Rupp, and F.~Huber, ``On-orbit
+  servicing missions: Challenges and solutions for spacecraft operations,'' in
+  {\em SpaceOps 2010 Conference}, April 2010.
+
+\bibitem{telaar2017gnc}
+J.~Telaar, I.~Ahrns, S.~Estable, W.~Rackl, M.~De~Stefano, R.~Lampariello,
+  N.~Santos, P.~Serra, M.~Canetri, F.~Ankersen, {\em et~al.}, ``Gnc
+  architecture for the e. deorbit mission,'' in {\em 7th European Conference
+  for Aeronautics and Space Sciences}, 2017.
+
+\bibitem{siciliano2016springer}
+B.~Siciliano and O.~Khatib, {\em Springer handbook of robotics}.
+\newblock Springer, 2016.
+
+\bibitem{moosavian2007free}
+S.~A.~A. Moosavian and E.~Papadopoulos, ``Free-flying robots in space: an
+  overview of dynamics modeling, planning and control,'' {\em Robotica},
+  vol.~25, no.~5, pp.~537--547, 2007.
+
+\bibitem{dlr96736}
+M.~D. Stefano, J.~Artigas, A.~Giordano, R.~Lampariello, and A.~Albu-Schaeffer,
+  ``On-ground experimental verification of a torque controlled free-floating
+  robot,'' in {\em 13th Symposium on Advanced Space Technologies in Robotics
+  and Automation (ASTRA 2015)}, 2015.
+
+\bibitem{yoshida2006capture}
+K.~Yoshida, D.~Dimitrov, and H.~Nakanishi, ``On the capture of tumbling
+  satellite by a space robot,'' in {\em Intelligent Robots and Systems, 2006
+  IEEE/RSJ International Conference on}, pp.~4127--4132, 2006.
+
+\bibitem{aghili2012prediction}
+F.~Aghili, ``A prediction and motion-planning scheme for visually guided
+  robotic capturing of free-floating tumbling objects with uncertain
+  dynamics,'' {\em IEEE Transactions on Robotics}, vol.~28, no.~3,
+  pp.~634--649, 2012.
+
+\bibitem{aghili2009optimal}
+F.~Aghili, ``Optimal control of a space manipulator for detumbling of a target
+  satellite,'' in {\em Robotics and Automation, 2009. ICRA'09. IEEE
+  International Conference on}, pp.~3019--3024, IEEE, 2009.
+
+\bibitem{flores2013optimal}
+A.~Flores-Abad, Z.~Wei, O.~Ma, and K.~D. Pham, ``Optimal control of a space
+  robot to approach a tumbling object for capture with uncertainties in the
+  boundary conditions,'' in {\em AIAA Guidance, Navigation, and Control (GNC)
+  Conference}, p.~4522, 2013.
+
+\bibitem{lampariello2013generating}
+R.~Lampariello and G.~Hirzinger, ``Generating feasible trajectories for
+  autonomous on-orbit grasping of spinning debris in a useful time,'' in {\em
+  Intelligent Robots and Systems (IROS), 2013 IEEE/RSJ International Conference
+  on}, pp.~5652--5659, IEEE, 2013.
+
+\bibitem{Dubowsky}
+M.~D. Lichter and S.~Dubowsky, ``State, shape, and parameter estimation of
+  space objects from range images,'' in {\em Robotics and Automation, 2004.
+  Proceedings. ICRA '04. 2004 IEEE International Conference on}, vol.~3,
+  pp.~2974--2979 Vol.3, April 2004.
+
+\bibitem{hillenbrand2005motion}
+U.~Hillenbrand and R.~Lampariello, ``Motion and parameter estimation of a
+  free-floating space object from range data for motion prediction,'' in {\em
+  Proceedings of i-SAIRAS}, 2005.
+
+\bibitem{RIS0}
+Z.~Z. Hong and D.~Gangqi, {\em Active Space Debris Removal by Visual Servo
+  Controlled Autonomous Robotics}.
+\newblock AIAA SPACE Forum, American Institute of Aeronautics and Astronautics,
+  Sept. 2016.
+
+\bibitem{Lippiello}
+V.~Lippiello, B.~Siciliano, and L.~Villani, ``A position-based visual impedance
+  control for robot manipulators,'' in {\em Proceedings 2007 IEEE International
+  Conference on Robotics and Automation}, pp.~2068--2073, April 2007.
+
+\bibitem{Drummond2002}
+T.~Drummond and R.~Cipolla, {\em Real-time visual tracking of complex
+  structures}.
+\newblock 2002.
+
+\bibitem{Oumer2015}
+N.~W. Oumer, G.~Panin, Q.~M\"ulbauer, and A.~Tseneklidou, ``Vision-based
+  localization for on-orbit servicing of a partially cooperative satellite,''
+  {\em Acta Astronautica}, vol.~117, pp.~19--37, 2015.
+
+\bibitem{Aghili07}
+F.~Aghili and K.~Parsa, ``Adaptive motion estimation of a tumbling satellite
+  using laser-vision data with unknown noise characteristics,'' in {\em 2007
+  IEEE/RSJ International Conference on Intelligent Robots and Systems},
+  pp.~839--846, Oct 2007.
+
+\bibitem{Markley}
+M.~Landis, ``{Attitude Error Representations for Kalman Filtering},'' {\em
+  Journal of Guidance, Control, and Dynamics}, vol.~26, no.~2, pp.~311--317,
+  2003.
+\newblock doi: 10.2514/2.5048.
+
+\bibitem{TweddlePhD}
+B.~E. Tweddle, {\em Computer Vision-Based Localization and Mapping of an
+  Unknown, Uncooperative and Spinning Target for Spacecraft Proximity
+  Operations}.
+\newblock PhD thesis, Massachusetts Institute of Technology, 2013.
+
+\bibitem{Kalman}
+R.~Kalman, ``A new approach to linear filtering and prediction problems,'' {\em
+  Transactions of the ASME--Journal of Basic Engineering}, vol.~82, no.~Series
+  D, pp.~35--45, 1960.
+
+\bibitem{Selfpaper}
+H.~Mishra and P.~Schmidt, ``Motion and parameter estimation for the robotic
+  capture of a non-cooperative space target considering egomotion
+  uncertainty,'' in {\em 14th Symposium on Advanced Space Technologies in
+  Robotics and Automation (ASTRA 2017)}, 2017.
+
+\bibitem{Yoshida_1}
+K.~Yoshida, ``Space robot dynamics and control: To orbit, from orbit, and
+  future,'' in {\em Robotics Research} (J.~M. Hollerbach and D.~E. Koditschek,
+  eds.), (London), pp.~449--456, Springer London, 2000.
+
+\bibitem{Nech_Yosh_ff}
+D.~N. Nenchev and K.~Yoshida, ``Impact analysis and post-impact motion control
+  issues of a free-floating space robot subject to a force impulse,'' {\em IEEE
+  Transactions on Robotics and Automation}, vol.~15, pp.~548--557, Jun 1999.
+
+\bibitem{Khatib}
+O.~Khatib, ``A unified approach for motion and force control of robot
+  manipulators: The operational space formulation,'' {\em IEEE Journal on
+  Robotics and Automation}, vol.~3, pp.~43--53, February 1987.
+
+\bibitem{BULLO199917}
+F.~Bullo and R.~M. Murray, ``{Tracking for fully actuated mechanical systems: a
+  geometric framework},'' {\em Automatica}, vol.~35, no.~1, pp.~17--34, 1999.
+
+\bibitem{Ott}
+C.~Ott, A.~Kugi, and Y.~Nakamura, ``Resolving the problem of non-integrability
+  of nullspace velocities for compliance control of redundant manipulators by
+  using semi-definite lyapunov functions,'' in {\em 2008 IEEE International
+  Conference on Robotics and Automation}, pp.~1999--2004, May 2008.
+
+\bibitem{Paden}
+B.~Paden and R.~Panja, ``Global asymptotically stable pd+ controller for robot
+  manipulator,'' vol.~47, pp.~1697--1712, 06 1988.
+
+\bibitem{7139588}
+J.~Artigas, M.~D. Stefano, W.~Rackl, R.~Lampariello, B.~Brunner, W.~Bertleff,
+  R.~Burger, O.~Porges, A.~Giordano, C.~Borst, and A.~Albu-Schaeffer, ``The
+  oos-sim: An on-ground simulation facility for on-orbit servicing robotic
+  operations,'' in {\em 2015 IEEE International Conference on Robotics and
+  Automation (ICRA)}, pp.~2854--2860, May 2015.
+
+\end{thebibliography}
