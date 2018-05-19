@@ -1,6 +1,4 @@
-This is BibTeX, Version 0.99d (TeX Live 2015)
-Capacity: max_strings=35307, hash_size=35307, hash_prime=30011
-The top-level auxiliary file: root.aux
+This is BibTeX, Version 0.99dThe top-level auxiliary file: root.aux
 The style file: ieeetr.bst
 Database file #1: Biblio.bib
 Warning--entry type for "Shoemaker2003" isn't style-file defined
@@ -9,45 +7,4 @@ Warning--I didn't find a database entry for "MOPS_1"
 Warning--empty chapter and pages in RIS0
 Warning--empty publisher in Drummond2002
 Warning--empty journal in Paden
-You've used 30 entries,
-            1876 wiz_defined-function locations,
-            680 strings with 9935 characters,
-and the built_in function-call counts, 8976 in all, are:
-= -- 866
-> -- 321
-< -- 0
-+ -- 119
-- -- 89
-* -- 614
-:= -- 1198
-add.period$ -- 35
-call.type$ -- 30
-change.case$ -- 26
-chr.to.int$ -- 0
-cite$ -- 33
-duplicate$ -- 493
-empty$ -- 903
-format.name$ -- 89
-if$ -- 2221
-int.to.chr$ -- 0
-int.to.str$ -- 30
-missing$ -- 31
-newline$ -- 98
-num.names$ -- 32
-pop$ -- 150
-preamble$ -- 1
-purify$ -- 0
-quote$ -- 0
-skip$ -- 341
-stack$ -- 0
-substring$ -- 656
-swap$ -- 198
-text.length$ -- 0
-text.prefix$ -- 0
-top$ -- 0
-type$ -- 0
-warning$ -- 3
-while$ -- 80
-width$ -- 32
-write$ -- 287
 (There were 5 warnings)

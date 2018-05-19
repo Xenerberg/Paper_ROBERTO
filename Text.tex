@@ -28,13 +28,15 @@ A gap in the methodology described above, which we want to close here, is that o
 
 \rev{We therefore present here a tracking controller for executing the grasping task of interest which: firstly, takes as input a reference trajectory from a database, generated off-line with a motion planner in simulation and feasible with respect to all relevant constraints; secondly, superimposes sensor-based corrections to the reference input, to account for the discrepancy between the simulated and the real world. 
 
-To do this, the first phase of the task, the approach phase, is executed by a novel architecture consisting of CHECK a visual servo in a cascade with an impedance controller. The visual servo brings the robot end-effector onto the grasping point on the tumbling Target. It is widely recognized that the robustness of a visual servo is significantly improved against modelling errors when performing tracking rather than regulation~\cite{siciliano2016springer}. The use of robot impedance control is intended to minimize the detrimental effect of an impact between the robot manipulator and the Target. A second novel feature of the controller is in the use of an extended Kalman filter to robustly estimate the pose of the Target throughout the approach motion. The filter is fed with the noisy, low-frequency pose estimates of a model-based visual tracking algorithm, providing higher frequency poses to the tracking controller. The Kalman filter is designed to reduce its computational footprint, in view of an implementation on a realtime system.
+To this end, the overall tracking control task is composed of the following two sequential phases. The first phase of the task, the approach phase, is executed by a novel interconnected system which is a cascade of visual servo and an impedance controller. The visual servo appears as an outer-loop velocity command which brings the robot end-effector onto the grasping point on the tumbling Target. It is widely recognized that the robustness of a visual servo is significantly improved against modelling errors when performing tracking rather than regulation~\cite{siciliano2016springer}. The use of impedance control is intended to minimize the detrimental effect of an impact between the robot manipulator and the Target. In the rigidization phase which follows the grasping task, the Target is stabilized with respect to the Chaser using the reference trajectory which in turn exploits the manipulator controller's dissipation to assure that the final configuration for the whole system is reached with a decaying velocity. Furthermore, in this phase, the intrinsic modelling uncertainty in the reference trajectory is handled with an on-line adaptation of the reference trajectory. An additional novelty in the controller is the use of robust estimates of pose and velocity which are obtained from an Extended Kalman Filter (EKF) for feedback and feed-forward respectively. The filter is fed with the noisy, outlier-affected, low-frequency pose estimates of a model-based visual tracking algorithm and produces filtered signals for the tracking controller. It is worth pointing out that the success of the aforesaid controller requires a judicious interplay between the different elements involved: the motion planner, the visual servo (including the EKF and the visual tracking) and the free-floating robot impedance controller. 
 
-In the following rigidization phase of the grasping task, in which the Target is already grasped but needs to be stabilized with respect to the Chaser, the reference trajectory brings the system into a final configuration with decaying velocity, by virtue of the robot manipulator controller's dissipation. The complete tracking control task comprises both these phases in sequence.
+In addition to defining the control laws for the aforementioned controller, experimental validations on DLR's OOS-SIM robotic facility, shown in Fig.~\ref{fig:facility}, are also presented. This facility allows reproducing realistic orbital gravity-free dynamics in three-dimensions through hardware-in-the-loop simulation. From an infrastructure perspective, a novel momentum-based approach was also developed for the facility in order to simulate the post-grasping tumbling motion of the compound system which was necessary to validate the concepts presented in this paper.}
 
-In this paper we present the tracking controller just described and its validation on DLR's OOS-SIM robotic facility, shown in Fig.~\ref{fig:facility}. This facility allows reproducing realistic orbital gravity-free dynamics in three-dimensions through hardware-in-the-loop simulation. The success of the controller requires a judicious interplay between the different elements involved: the motion planner, the visual servo (including the Kalman filter and the visual tracking) and the free-floating robot impedance controller. Furthermore, the intrinsic modelling uncertainty in the reference trajectory is handled with on-line adaptation of the trajectory for the rigidization phase. The OOS-SIM facility is used here with a novel momentum-based approach to simulate the post-grasping tumbling motion of the satellite compound.}
+The paper is then structured as follows. In the rest of this Section, we present a relevant bibliography and a more detailed problem statement. In Section~\ref{sec:methods} we provide details of the applied methods, while in Section~\ref{sec:results} we present the experimental results and their analysis. Finally, in Section~\ref{sec:disc} we provide a discussion and conclude with remarks outlining the scope of future work. 
 
-The paper is then structures as follows. In the rest of this Section, we present a relevant bibliography and a more detailed problem statement. In Section~\ref{sec:methods} we provide details of the applied methods, while in Section~\ref{sec:results} we present the experimental results and their analysis. In Section~\ref{sec:disc} we provide a discussion as well as our conclusions and views on future work. The mathematical notation is such that scalar constants are written in plain text, scalar variables in italics, vectors, vector arrays and matrices are always bold, coordinates of vector quantities are expressed with the left upper superscript. The right upper superscript $i\:j$ defined the direction of a vector from $i$ to $j$. The twist of a rigid body is generally expressed as $\MatO{\dot{x}}=[v\;\omega]^T$.
+The mathematical notation is such that scalar constants are written in plain text, scalar variables in italics, vectors, vector arrays and matrices are always bold, coordinates of vector quantities are expressed with the left upper superscript. The right upper superscript $i\:j$ defined the direction of a vector from $i$ to $j$. \rek{A homogeneous transformation matrix (pose) is denoted as $\mathbf{H} \equiv \mathbf{H}(R(q),r)$, where $q \in \mathbb{R}^4$ and $r \in \mathbb{R}^3$ are the quaternion orientation and the position respectively. A quaternion is written as $\theta = \begin{bmatrix}\theta_v^T& \theta_0\end{bmatrix}$ where $\theta_v \in \mathbb{R}^3$ is the vector part. A pose $\mathbf{H}$ is driven by a twist $\dot{\mathbf{X}} = \begin{bmatrix}\dot{r}^T & \omega^{b^T}\end{bmatrix}^T$, where the superfix $b$ denotes a body frame vector. All poses and velocities expressed relative to $\mathcal{I}$ are denoted with one subscript of the corresponding lowercase. For instance, the Target's inertial pose is defined as $\mathbf{H}_t = (R(\theta),r)$ where $\theta,~r$ are indicated relative to the $\mathcal{I}$, and $\dot{\mathbf{x}}_t$ denotes the Target velocity twist. Between two non-inertial frames the pose/velocity notation is only different in using lowercase of both frames. An example is the measured pose using the vision sensor which is the pose of $\mathcal{G}$ relative to $\mathcal{E}$, and is denoted as $\mathbf{H}_{eg}(R(\mu),r_c)$. Following these definitions, the forward kinematics of the chaser end-effector is $\mathbf{H}_e(R(\eta_c),\rho_c) = \mathbf{H}_b\mathbf{H}_{be}$. The transformation of the grasping frame $\mathcal{G}$ relative to $\mathcal{T}$ is denoted as $\mathbf{H}_{tg}(R(\eta_t),r_t)$. }
+
+
 %
 %
 \subsection{Related work}
@@ -129,13 +131,13 @@ In this Section we present the methods used to solve the grasping task, to inclu
 \psfrag{cam}[cc][cc][\FontFigS]{\small{$H_{eg}$}}
 \psfrag{ts}[cc][cc][\FontFigS]{\small{$10$ [Hz]}}
 \psfrag{t_3}[cc][cc][\FontFigS]{\small{$\tau_{rig}$}}
-\psfrag{mp_car}[cc][cc][\FontFigS]{\small{$\begin{bmatrix}H_{eg,ref}\\ V_{eg,ref}\end{bmatrix}$}}
-\psfrag{t_5}[cc][cc][\FontFigS]{\small{$\begin{Bmatrix}V_{e} & \dot{q} & H_{e}(H_b, q) & q\end{Bmatrix}$}}
+\psfrag{mp_car}[cc][cc][\FontFigS]{\small{$\begin{bmatrix}H_{eg,ref}\\ \dot{X}_{eg,ref}\end{bmatrix}$}}
+\psfrag{t_5}[cc][cc][\FontFigS]{\small{$\begin{Bmatrix}\dot{X}_{e} & \dot{q} & H_{e}(H_b, q) & q\end{Bmatrix}$}}
 \psfrag{mp_joint}[cc][cc][\FontFigS]{\small{$\begin{bmatrix}q_{ref}\\ \dot{q}_{ref}\end{bmatrix}$}}
-\psfrag{vs_out}[cc][cc][\FontFigS]{\small{$\begin{bmatrix}H_{e,des}\\ V_{e,des}\end{bmatrix}$}}
+\psfrag{vs_out}[cc][cc][\FontFigS]{\small{$\begin{bmatrix}H_{e,des}\\ \dot{X}_{e,des}\end{bmatrix}$}}
 \psfrag{cc_out}[cc][cc][\FontFigS]{\small{$\begin{bmatrix}\tau_{cart}\\ \tau_{null}\end{bmatrix}$}}
 \psfrag{int}[cc][cc][\FontFigS]{$\int$}
-\psfrag{V_e}[cc][cc][\FontFigS]{\small{$V_e$}}
+\psfrag{V_e}[cc][cc][\FontFigS]{\small{$\dot{X}_e$}}
 \psfrag{H_e}[cc][cc][\FontFigS]{\small{$H_e$}}
 \psfrag{j}[cc][cc][\FontFigS]{\small{$\begin{bmatrix}q\\ \dot{q}\end{bmatrix}$}}
 \psfrag{H_T}[cc][cc][\FontFigS]{\small{$H_t$}}
@@ -177,7 +179,17 @@ In this Section we present the methods used to solve the grasping task, to inclu
 % - 1 pp
 %
 \subsubsection{Approach and tracking phases}
-The motion planning \rev{problem relating to the approach and tracking phases is formulated as a point-to-point task (with non-zero final velocity) and an inverse differential kinematics task to follow it~\cite{lampariello2013generating}	. Mathematically, the first step can be formulated as the constrained optimal control problem
+The free-floating dynamics of the robot manipulator are given by~\cite[\S 55]{siciliano2016springer}
+\begin{equation} \label{eq_manip_main}
+  \begin{bmatrix}
+    \mathbf{M}_b &     \mathbf{M}_{bm} \\     \mathbf{M}_{bm}^T &     \mathbf{M}_m  \end{bmatrix} \begin{bmatrix}
+    \ddot{\mathbf{x}}_b\\ \ddot{\mathbf{q}}\end{bmatrix} + \begin{bmatrix}     \mathbf{C}_b &     \mathbf{C}_{bm} \\     \mathbf{C}_{mb} &     \mathbf{C}_m \end{bmatrix} \begin{bmatrix}
+    \dot{\mathbf{x}}_b\\ \dot{\mathbf{q}} \end{bmatrix} = \begin{bmatrix}
+    0\\ \mathbf{\tau}
+    \end{bmatrix}
+\end{equation}
+where $    \mathbf{M}_b \in \mathbb{R}^{6\times 6}$, $    \mathbf{M}_{bm} \in \mathbb{R}^{6\times 7}$, $    \mathbf{M}_m \in \mathbb{R}^{7\times 7}$ are the locked, coupled and $7$-joint manipulator's inertias respectively. $\mathbf{C}_b \in \mathbb{R}^{6\times6}, \mathbf{C}_{bm} \in \mathbb{R}^{6\times7}, \mathbf{C}_{mb} \in \mathbb{R}^{7\times 6}, \mathbf{C}_m \in \mathbb{R}^{6\times7}$ make up the whole Coriolis matrix, $\mathbf{\tau} \in \mathbb{R}^7$ are the joint torques, $\dot{\mathbf{x}}_b \in \mathbb{R}^6$ is the twist of the base and $\mathbf{q} \in \mathbb{R}^7$ are the joint positions respectively. 
+The motion planning \rev{problem relating to the approach and tracking phases is formulated as a point-to-point task (with non-zero final velocity) and an inverse differential kinematics task to follow it~\cite{lampariello2013generating}. Mathematically, the first step can be formulated as the constrained optimal control problem
 \begin{equation}
 \min_{\MatO{q}_1(t)} \Gamma{}_1(\MatO{q}_1(t))
 \end{equation}
@@ -199,16 +211,7 @@ for $0\le t \le t_f{}_1$ and to the boundary conditions
 \MatO{q}_1(0)=\MatO{q}_1{}_{in}, \MatO{\dot{q}}{}_1(0)=0.
 \label{eq:const1}
 \end{equation}
-The free-floating dynamics of the robot manipulator are given by~\cite[\S 55]{siciliano2016springer}
-\begin{equation} \label{eq_manip_main}
-    \underbrace{\begin{bmatrix}
-    \mathbf{M}_b &     \mathbf{M}_{bm} \\     \mathbf{M}_{bm}^T &     \mathbf{M}_m  \end{bmatrix}}_{M} \underbrace{\begin{bmatrix}
-    \ddot{\mathbf{x}}_b\\\ddot{\mathbf{q}}\end{bmatrix}}_{\dot{V}} + \underbrace{\begin{bmatrix}     \mathbf{C}_b &     \mathbf{C}_{bm} \\     \mathbf{C}_{mb} &     \mathbf{C}_m \end{bmatrix}}_{C} \underbrace{\begin{bmatrix}
-    \dot{\mathbf{x}}_b\\ \dot{\mathbf{q}} \end{bmatrix}}_{V} = \underbrace{\begin{bmatrix}
-    0\\ \mathbf{\tau}
-    \end{bmatrix}}_{\mathcal{F}}
-\end{equation}
-where $    \mathbf{M}_b \in \mathbb{R}^{6\times 6}$, $    \mathbf{M}_{bm} \in \mathbb{R}^{6\times 7}$, $    \mathbf{M}_m \in \mathbb{R}^{7\times 7}$ are the locked, coupled inertia and manipulator inertias respectively for $7$-joint manipulator. $C \in \mathbb{R}^{(6+7)\times(6+7)}$ refers to the whole Coriolis matrix, $\mathbf{\tau} \in \mathbb{R}^7$ are the joint torques, $\dot{\mathbf{x}}_b \in \mathbb{R}^6$ is the twist of the base and $\mathbf{q} \in \mathbb{R}^7$ are the joint positions respectively. (\ref{eq:dyn}) then is an equality constraint stemming from the first line of these equations with a term on the right-hand side for rheonomically driven joints. $t_f{}_1$ is a predefined relative final time. $\Gamma{}_1$ is a predefined cost function. $\MatO{h}{}_1$ include inequality box constraints of type $\MatO{x}_{min} \le \MatO{x}(t) \le \MatO{x}_{max}$, for $\MatO{x}=\{\MatO{q}{}_1, \MatO{\dot{q}}{}_1 \}$.
+(\ref{eq:dyn}) then is an equality constraint stemming from the first line of these equations with a term on the right-hand side for rheonomically driven joints. $t_f{}_1$ is a predefined relative final time. $\Gamma{}_1$ is a predefined cost function. $\MatO{h}{}_1$ include inequality box constraints of type $\MatO{x}_{min} \le \MatO{x}(t) \le \MatO{x}_{max}$, for $\MatO{x}=\{\MatO{q}{}_1, \MatO{\dot{q}}{}_1 \}$.
 
 Functions $\MatO{f}{}_1$ and $\MatO{g}{}_1$ are equality constraints on the final end-effector pose $\MatO{H}_e(t_f{}_1)$ and twist $\dot{\mathbf{x}}_e(t_f{}_1)$ to be in a desired relative non-zero position and orientation with respect to the grasping point and travelling at its velocity. (\ref{eq:const1}) expresses boundary conditions on position and on velocity. 
 
@@ -278,7 +281,7 @@ In this phase, the offline motion planner provides a reference trajectory in joi
 
 The optimization problem described above is solved as a nonlinear programming problem (NLP). The inequality constraints $\MatO{h}$ are satisifed at a finite number of $k$ via points. The equality constraints in ~(\ref{eq:dyn}) and ~(\ref{eq:dyn_mod}) are satisfied by numerical integration. As such, the NLP is solved with a single shooting approach, with parameterization of the joint positions in time, i.e., $\MatO{q}_i=\MatO{q}(t,\MatO{p}_i)$, where $\MatO{p}_i$ is a column matrix containing $\text{N}_i$ optimization parameters and $i$ is either 1 or 3. For the approach and for the rigidization problems described above, two parameter sets $\MatO{p}{}_1$ and $\MatO{p}{}_{3}$ result. The NPL is solved with the Sequential Quadratic Programming algorithm from the MOPS library~\cite{MOPS_1}. The numerical integration is performed with an explicit fifth order Runge-Kutta method. }
 
-In the online setting however a modification of the reference trajectory for the ridigization is necessary, to account for the deviation from the reference trajectory in the previous approach phase. Each joint trajectory is parameterized with a uniform B-spline, the parameters of which are the optimization parameters to be found. The solution parameters generated offline are still used to synthesize online a new rigidization trajectory, by modifying them with the measured initial robot manipulator joint states. Let the measured initial position and velocity for a given joint be $q_{0m}$ and $\dot{q}_{0m}$ respectively, and the B-spline parameters $q_i, 1 \leq i \leq N_B$ ($N_B<N and N-N_B are the parameters which satisfy the boundary conditions$). The modified parameters are then taken to be:
+In the online setting however a modification of the reference trajectory for the ridigization is necessary, to account for the deviation from the reference trajectory in the previous approach phase. Each joint trajectory is parameterized with a uniform B-spline, the parameters of which are the optimization parameters to be found. The solution parameters generated offline are still used to synthesize online a new rigidization trajectory, by modifying them with the measured initial robot manipulator joint states. Let the measured initial position and velocity for a given joint be $q_{0m}$ and $\dot{q}_{0m}$ respectively, and the B-spline parameters $q_i, 1 \leq i \leq N_B$ ($N_B<N$ and $N-N_B$ are the parameters which satisfy the boundary conditions). The modified parameters are then taken to be:
 \begin{equation}
 q_{i \: mod} =   q_i +  \left( q_0 - q_{0m} + \frac{\dot{q}_{0m} \: ({t_{rf}}-{t_{ri}})}{N_B} \right) \: \frac{(N_B-i)}{N_B},
 \end{equation}
@@ -321,111 +324,93 @@ where the second term accounts for the initial position deviation $q_0 - q_{0m}$
 %
 %
 \subsection{Extended Kalman Filter (Model-based control)}
-The Extended Kalman Filter (EKF) as a nonlinear observer is ubiquitous in all disciplines germane to this paper. It is a nonlinear observer in the sense that the model propagation is nonlinear whereas, the error injection is linear and hence the covariance time-propagation is performed through a linear approximation of the state dynamics. In the context of this paper, the EKF provides robustness to the tracking controller against incoming measurement outliers from the computer vision algorithm by ensuring Lipschitz continuity of the measurement. Due to its predictor-update structure, it also provides a state prediction which allows us to compensate for image-processing time-delays and ensure continuous control errors during occlusion or measurement failures caused by degenerate observability conditions. From a tracking controller perspective, the EKF also estimates the target velocities which can be used as a feed-forward term for the Visual Servo, without which, the controller design is constrained. 
+The Extended Kalman Filter (EKF) is a ubiquitous state observer for nonlinear systems. It is a nonlinear observer in the sense that the model propagation is nonlinear whereas, the error injection is linear. In the context of this paper, the EKF provides robustness to the tracking controller against incoming measurement outliers from the computer vision algorithm by ensuring measurement continuity. Due to its predictor-update structure, it also provides a state prediction which allows us to compensate for image-processing time-delays and ensure continuous control errors during occlusion or measurement failures caused by degenerate observability conditions. From a tracking controller perspective, the EKF also estimates the target velocities for a feed-forward term for the Visual Servo, which compensates for the disturbance due to target motion that acts on the controller.
 
-\rek{In the following text, a pose matrix is denoted as, $\mathbf{H} = \begin{bmatrix}R(q) & r\\0_{1,3} & 1\end{bmatrix} \equiv \mathbf{H}(R,r)$, where $q$ and $r$ are the quaternion orientation and the position respectively. The state of the target is defined by its inertial pose, $\mathbf{H}_t = (R(q),r)$ where $q,~r$ are indicated relative to the inertial frame. The measured pose using the vision sensor is the pose of $\mathcal{G}$ relative to $\mathcal{E}$, and is denoted as $\mathbf{H}_{eg}(R(\mu),r_c)$. The forward kinematics of the chaser end-effector is $\mathbf{H}_e(R(\eta_c),\rho_c) = \mathbf{H}_{be}(q)\mathbf{H}_b$. The transformation of the grasping frame $\mathcal{G}$ relative to $\mathcal{T}$ is known from existing satellite model, and is denoted as $\mathbf{H}_{tg}(R(\eta_t),r_t)$. The pose $\mathbf{H}_t$ is driven by a mixed velocity representation $\mathbf{V}_t^m = \begin{bmatrix}\dot{r}\\ \omega^b\end{bmatrix}$, where the superfix $b$ and $m$ denote body and mixed velocity forms \rek{respectively}. The dynamic system \rek{for the EKF} is modeled with the state, \rek{$x_a \in \mathbb{R}^{13} = \begin{bmatrix} q^T& r^T& \omega^{b^T}& \dot{r}^T&\end{bmatrix}^T$} as,}
-
-\begin{align}
-\frac{d}{dt}\begin{bmatrix} \dot{\eta_q} \\ r \\ \omega^b \\ \dot{r}\end{bmatrix} = \begin{bmatrix}\frac{1}{2}\omega^b \otimes \eta_q \\ \dot{r} \\-\omega^b_\times I\omega^b \\ \Phi(n) \end{bmatrix}        \label{eq_SysDyn}
-\end{align}
-where $\otimes$ denotes the quaternion multiplication tensor, $(.)_\times$ denotes the skew-symmetric form of $\mathbb{R}^3$. $\Phi(n)$ is the linear approximation of orbital dynamics given by the Clohessy-Wiltshire equations \rek{\cite{Aghili07}}.
 \rek{\begin{assumption} \label{ass_ignore_clw}
-Since the scope of this paper is limited to an operational time, $T < 20$ [sec], the contribution of the term which accounts for the relative translation motion, and is given by the Clohessy-Wiltshire equations, is neglected.
-Hence, from eq.~\eqref{eq_SysDyn}
-\begin{equation} \label{eq_trans_kin_ass}
-\frac{d}{dt}\begin{bmatrix}r\\ \dot{r} \end{bmatrix} = \begin{bmatrix}0_{3,3} & 1_{3,3}\\ 0_{3,3}& 0_{3,3} \end{bmatrix}\begin{bmatrix}r\\ \dot{r} \end{bmatrix}
-\end{equation}
+Since the scope of this paper is limited to an operational time, $T < 20$ [sec], the contribution of the term which accounts for the relative translation due to orbital motion, and is given by the Clohessy-Wiltshire equations, is neglected.
 \end{assumption}}
-
-\rek{For the quaternion group, $Q$, in the multiplicative variant of the EKF, the quaternion state is maintained as a $3$-component vector as $\delta q_v(a_p) \in T_{\overline{q}}Q$, at a nominal value of the quaternion $\overline{q}$. $T_{\overline{q}}Q$ is the tangent space to the quaternion manifold and $a_p$ is a 3-component parameterization vector.} A detailed \rek{discussion} on such vector expressions was given in \cite{Markley}. In this text, the Modified Rodriguez Parameters (MRP), $a_p$ was chosen \rek{so that singularity is not encountered before angular error $2\pi$}. \rek{The tangent vector $\delta q_v$, the parameterization vector $a_p$ and the quaternion $q = \begin{bmatrix}q_v^T& q_0\end{bmatrix}$ are related as follows},
+The dynamic system \rek{for the EKF} is modeled with the state, \rek{$x_a \in \mathbb{R}^{13} = \begin{bmatrix} \theta^T& r^T& \omega^{b^T}& \dot{r}^T&\end{bmatrix}^T$} as,
 \begin{align}
-\rek{a_p(q) = \frac{4}{1+q_0}q_v}\quad,
-\rek{\delta q_v(a_p) = \frac{1}{16}\begin{bmatrix}
+\frac{d}{dt}\begin{bmatrix} \dot{\theta} \\ r \\ \omega^b \\ \dot{r}\end{bmatrix} = \begin{bmatrix}\frac{1}{2}\omega^b \otimes \theta \\ \dot{r} \\-\omega^b_\times I\omega^b \\ \Phi(n) \end{bmatrix}        \label{eq_SysDyn}
+\end{align}
+where $\otimes$ denotes the quaternion multiplication tensor, $(.)_\times$ denotes the skew-symmetric form of $\mathbb{R}^3$. $\Phi(n)$ is the linear approximation of orbital dynamics given by the Clohessy-Wiltshire equations \rek{\cite{Aghili07}} for mean anomaly $n$. Based on ass.~\ref{ass_ignore_clw}, $\Phi(n) = \mathbf{0}_{3,3}$.
+
+\rek{For the quaternion group, $Q$, in the multiplicative variant of the EKF, the quaternion state is maintained as a $3$-component vector as $\delta \theta(a_p) \in T_{\overline{\theta}}Q$, at a nominal value of the quaternion $\overline{\theta}$. $T_{\overline{\theta}}Q$ is the tangent space to the quaternion manifold and $a_p$ is a 3-component parameterization vector.} A detailed \rek{discussion} on such vector expressions was given in \cite{Markley}. In this text, the Modified Rodriguez Parameters (MRP), $a_p$ was chosen \rek{so that singularity is not encountered before angular error $2\pi$}. \rek{The tangent vector $\delta \theta$, the parameterization vector $a_p$ and the quaternion $\theta$ are related as follows},
+\begin{align}
+\rek{a_p(\theta) = \frac{4}{1+\theta_0}\theta_v}\quad,
+\rek{\delta \theta_v(a_p) = \frac{1}{16}\begin{bmatrix}
 8a_p \\ 16 - a_p^Ta_p
 \end{bmatrix}}
 \end{align}
 The differential form for $a_p$ is given as,
 \begin{align} \label{eq_quat_kin}
-\dot{a}_p = \Big(-\frac{1}{2}\omega_\times + \frac{1}{8}\Big)a_p + \Big(1 - \frac{1}{16}a_p^Ta_p\Big)\omega	 
+\dot{a}_p = \Big(-\frac{1}{2}\omega_\times^b + \frac{1}{8}\Big)a_p + \Big(1 - \frac{1}{16}a_p^Ta_p\Big)\omega^b 
 \end{align}
 
 
-Among the alternatives for scaled inertia parameterization for zero-torque motion propagation, \cite[\S 4.6]{TweddlePhD} the $3$-parameter form proposed in \cite{Aghili07} is used. So, the angular dynamics can be \rek{written by reformulating the rotational dynamics Euler equation in eq.~\eqref{eq_SysDyn}} as,
+Among the alternatives for scaled inertia parameterization for zero-torque motion propagation, \cite[\S 4.6]{TweddlePhD} the $3$-parameter ($p_x,~p_y,~p_z$) form proposed in \cite{Aghili07} is used. So, the angular dynamics can be \rek{written by reformulating the rotational dynamics Euler equation in eq.~\eqref{eq_SysDyn}} as,
 \begin{align} 
- \dot{\omega} = \psi(\omega) =  \begin{bmatrix}
- p_x \omega_y \omega_z \\
-  p_y \omega_x \omega_z \\
-   p_z \omega_x \omega_y  
+ \dot{\omega}^b = \psi(\omega^b) =  \begin{bmatrix}
+ p_x \omega_y^b \omega_z^b \\
+  p_y \omega_x^b \omega_z^b \\
+   p_z \omega_x^b \omega_y^b  
  \end{bmatrix}
 \end{align} 
-which \rek{has a} linear approximation about the \rek{current} estimate, $\hat{\omega}$ \rek{as},
+which \rek{has a} linear approximation about the \rek{current} estimate, $\hat{\omega^b}$ \rek{as},
 \begin{align} \label{eq_lin_rot_dyn}
-	\delta \dot{\omega} = \mathbf{M}\delta{\omega}
-\end{align} where $M = \Big( \frac{\partial \psi(\omega)}{\partial \omega}\Big)_{\omega = \hat{\omega}}$ is a hollow matrix \cite{Aghili07}.
+	\delta \dot{\omega^b} = \mathbf{M}\delta{\omega^b}
+\end{align} where $M = \Big( \frac{\partial \psi(\omega)}{\partial \omega^b}\Big)_{\omega = \hat{\omega^b}}$ is a hollow matrix \cite{Aghili07}.
 
 Finally, \rek{using eq.~\eqref{eq_quat_kin}, \eqref{eq_lin_rot_dyn} and eq.~\eqref{eq_trans_kin_ass} from ass.~\ref{ass_ignore_clw},} the linear approximation of the \rek{torque-free} system \eqref{eq_SysDyn} with state $x \in \mathbb{R}^{12} = \begin{bmatrix}a_p^T&r^T&\omega^{b^T}&\dot{r}^T & \end{bmatrix}$ is given in \cite[eq. 4.79]{TweddlePhD} as,
 \begin{align}
 \dot{x} = \mathbf{A}x + \mathbf{B}w
 \end{align}
-Based on Fig.~\ref{fig:facility}, the measurement equation is given as,
-\begin{align}
-y = \begin{bmatrix}
-r_c \\ \mu \end{bmatrix} = \begin{bmatrix}
-\rho_c + R(\eta_c)(r + R(\eta_t)\rho_t) \\
-\eta_t^*\otimes q \otimes \eta_c^*
-\end{bmatrix}
+From the Fig.~\ref{fig:facility}, the measurement is derived by using current forward kinematics ($\mathbf{H}_e$) and known target geometry ($\mathbf{H}_{tg}$) is given as,
+\begin{align} \label{eq_meas_facility}
+g = \begin{bmatrix}r\\ \theta\end{bmatrix} = \begin{bmatrix}
+R(\eta_c)^T r_c + \rho_c -R(\eta_t)\rho_t\\ \eta_t^*\otimes\mu\otimes \eta_c \end{bmatrix}
 \end{align}
 \rek{where $(.)^*$ refers to the quaternion inverse.}
-The linear approximation for the measurement was \rek{derived several times before in \cite{Aghili07}, \cite{Dubowsky}, \cite{TweddlePhD}, and we only state the final formula as,}
+In order to obtain the EKF measurement $y$ from available measurement$g$, $a_p$ is computed from eq.~\eqref{eq_meas_facility}.
+The linear approximation for the EKF measurement was \rek{derived several times before in \cite{Aghili07}, \cite{Dubowsky}, \cite{TweddlePhD}, and we only state the final formula as,}
 \rek{\begin{align}
 y = \mathbf{H}x,~\mathbf{H} = \begin{bmatrix}
 - R(\overline{q})\rho_{t_\times} & 0_{3,3} & 1_{3,3} & 0_{3,3}\\
  1_{3,3} &   & & 0_{3,9}
 \end{bmatrix}
 \end{align}}
-\rek{where $\mathbf{H} = \frac{\partial y}{\partial x} \Big|_{x_a = \hat{x}_a}$ is obtained by linear approximation of the measurement function about the current state estimate $\hat{x}_a$}. Since the Kalman Filter equations are standard, we do not explicitly write the prediction-update form. The interested reader is referred to \cite{Kalman} for seminal paper on equations. By using the aforementioned system of equations, the EKF was implemented with the Outlier-rejection (OR) scheme suggested in \cite{Selfpaper} to provide robustness against local outliers from the vision system. \rek{The EKF output $\hat{y} = \begin{bmatrix}r_c^T & \mu^T\end{bmatrix}^T \equiv \hat{\mathbf{H}}_{eg}$ is used for control in the next step.}
+\rek{where $\mathbf{H} = \frac{\partial y}{\partial x} \Big|_{x_a = \hat{x}_a}$ is obtained by linear approximation of the measurement function about the current state estimate $\hat{x}_a$}. Since the Kalman Filter equations are standard, we do not explicitly write the prediction-update form. The interested reader is referred to \cite{Kalman} for seminal paper on equations. By using the aforementioned system of equations, the EKF was implemented with the Outlier-rejection (OR) scheme suggested in \cite{Selfpaper} to provide robustness against local outliers from the vision system. \rek{The EKF output $\hat{y} = \begin{bmatrix}\hat{r_c}^T & \hat{\mu}^T\end{bmatrix}^T \equiv \hat{\mathbf{H}}_{eg}$ is used for control in the next step.}
 %
 \subsection{Visual Servo for Approach and Tracking Phases}
 \label{sec:approach_control}
 \rek{
-The equation of motion for the free-floating space manipulator is given as, see \cite{Yoshida_1},
-
-CHECK (remove equation and citation from here)
-\begin{equation} \label{eq_manip_main}
-    \underbrace{\begin{bmatrix}
-    \mathbf{M}_b &     \mathbf{M}_{bm} \\     \mathbf{M}_{bm}^T &     \mathbf{M}_m  \end{bmatrix}}_{M} \underbrace{\begin{bmatrix}
-    \ddot{\mathbf{x}}_b\\\ddot{\mathbf{q}}\end{bmatrix}}_{\dot{V}} + \underbrace{\begin{bmatrix}     \mathbf{C}_b &     \mathbf{C}_{bm} \\     \mathbf{C}_{mb} &     \mathbf{C}_m \end{bmatrix}}_{C} \underbrace{\begin{bmatrix}
-    \dot{\mathbf{x}}_b\\ \dot{\mathbf{q}} \end{bmatrix}}_{V} = \underbrace{\begin{bmatrix}
-    0\\ \mathbf{\tau}
-    \end{bmatrix}}_{\mathcal{F}}
-\end{equation}
-where $    \mathbf{M}_b \in \mathbb{R}^{6\times 6}$, $    \mathbf{M}_{bm} \in \mathbb{R}^{6\times n}$, $    \mathbf{M}_m \in \mathbb{R}^{n\times n}$ are the locked, coupled inertia and manipulator inertias respectively for $n$-joint manipulator (non-redundant). $C \in \mathbb{R}^{(6+n)\times(6+n)}$ refers to the whole Coriolis matrix, $\mathbf{\tau} \in \mathbb{R}^n$ are the joint torques, $\dot{\mathbf{x}}_b \in \mathbb{R}^6$ is the velocity of the base and $\mathbf{q} \in \mathbb{R}^n$ are the joint positions respectively.
-
 For the free-floating space manipulator, eq.~\eqref{eq_manip_main} can be reformulated after eliminating terms explicitly depending on $\mathbf{x}_b$ and its derivatives as, 
 \begin{equation}\label{eq_reduced_dyn_js}
  \hat{\mathbf{M}}_m(\mathbf{q},\mathbf{x}_b)\ddot{\mathbf{q}} + \tilde{\mathbf{C}}_m(\mathbf{q},\dot{\mathbf{q}},\mathbf{x}_b,\dot{\mathbf{x}}_b)\dot{\mathbf{q}} = \mathbf{\tau},  \quad \text{(free-floating model)}
 \end{equation}
 where $\hat{\mathbf{M}}_m = \mathbf{M}_m - \mathbf{M}_{bm}^T\mathbf{M}_b^{-1}\mathbf{M}_{bm}$, $\hat{\mathbf{C}}_b = \mathbf{C}_{mb} - \mathbf{M}_b^{-1}\mathbf{C}_b$, $\tilde{\mathbf{C}}_m= \hat{\mathbf{C}}_m(\mathbf{q},\dot{\mathbf{x}}_b,\dot{\mathbf{q}}) - \hat{\mathbf{C}}_b(\mathbf{q},\dot{\mathbf{x}}_b,\dot{\mathbf{q}})\mathbf{M}_b^{-1}\mathbf{M}_{bm}$, are the generalized terms (see \cite{Nech_Yosh_ff}) and $\hat{\mathbf{C}}_m = \mathbf{C}_m - \mathbf{M}_b^{-1}\mathbf{C}_{bm}$. Using the formulation in \cite[eq. 10]{Ott}, the eq.~\eqref{eq_reduced_dyn_js} can be written only for the Cartesian dynamics as, 
 \begin{equation}
-\mathbf{\Lambda}_m(\mathbf{q},\mathbf{x}_b)\dot{V}_m + \mathbf{\mu}_m(\mathbf{q},\dot{\mathbf{q}},\mathbf{x}_b,\dot{\mathbf{x}}_b)V_m = \mathcal{\mathbf{F}}_m
+\mathbf{\Lambda}_m(\mathbf{q},\mathbf{x}_b)\ddot{\mathbf{x}}_e + \mathbf{\mu}_m(\mathbf{q},\dot{\mathbf{q}},\mathbf{x}_b,\dot{\mathbf{x}}_b)\dot{\mathbf{x}}_e = \mathcal{\mathbf{F}}_e
 \end{equation}
-where $\mathbf{\Lambda}_m = (\mathbf{J}_g(\mathbf{q},{\mathbf{x}}_b)\hat{\mathbf{M}}_m^{-1}\mathbf{J}_g(\mathbf{q},{\mathbf{x}}_b)^T )^{-1}$, $\mathbf{\mu} = \mathbf{J}_g(\mathbf{q},{\mathbf{x}}_b)^{-T}\tilde{\mathbf{C}}_m\mathbf{J}_g(\mathbf{q},{\mathbf{x}}_b) + \mathbf{J}_g(\mathbf{q},{\mathbf{x}}_b)^{-T}\hat{\mathbf{M}}_m\frac{d}{dt}\mathbf{J}_g(\mathbf{q},{\mathbf{x}}_b)^{-1}$ where $\mathcal{\mathbf{F}}_m$ is the Cartesian control torque.}
+where $\mathbf{\Lambda}_m = (\mathbf{J}_g(\mathbf{q},{\mathbf{x}}_b)\hat{\mathbf{M}}_m^{-1}\mathbf{J}_g(\mathbf{q},{\mathbf{x}}_b)^T )^{-1}$, $\mathbf{\mu} = \mathbf{J}_g(\mathbf{q},{\mathbf{x}}_b)^{-T}\tilde{\mathbf{C}}_m\mathbf{J}_g(\mathbf{q},{\mathbf{x}}_b) + \mathbf{J}_g(\mathbf{q},{\mathbf{x}}_b)^{-T}\hat{\mathbf{M}}_m\frac{d}{dt}\mathbf{J}_g(\mathbf{q},{\mathbf{x}}_b)^{-1}$ where $\mathcal{\mathbf{F}}_e$ is the Cartesian control torque.}
 
 
-\rek{In the context of On-Orbit Servicing, the target is partially cooperative in that its model is available in advance. As a result, \rek{in this paper, the kinematic-level control used is Position-based Visual Servo (PBVS), which means that the control law uses the pose error $\hat{\mathbf{H}}_{eg}$ that is reconstructed from image-space measurements}. Based on the model-based visual tracking and EKF's \rek{pose} results, this control law is used to provide a velocity and pose for the inner dynamics controller. }
+\rek{In the context of On-Orbit Servicing, the target is partially cooperative in that its model is available in advance. As a result, \rek{in this paper, the kinematic-level control used is Position-based Visual Servo (PBVS), which means that the control law uses the pose error $\hat{\mathbf{H}}_{eg}$ that is reconstructed from image-space measurements}. Based on the model-based visual tracking and EKF's \rek{pose} results, this control law is used to provide a desired velocity ($\hat{\dot{X}}_e$) and pose for the inner loop impedance controller. }
 
-\rek{In accordance to fig.~\ref{fig:blockdiagram}, a kinematic tracking velocity for the manipulator is generated using the visual servo law. Firstly, the reference trajectory is used to compute a desired end-effector pose $\mathbf{H}_{e,des} = (\mathbf{H}_e\hat{\mathbf{H}}_{eg}) \mathbf{H}_{ge,ref}$. Secondly, this function is used as a pose error to construct the visual servo law $\hat{V}_m =\begin{bmatrix}v_m^T  &\omega_m^T\end{bmatrix}^T$. Using the slow-sampled $\hat{V}_m$, a virtual frame is generated as $\dot{\mathbf{H}}_{e,v}(R_{e,v},p_{e,v}) = \Ad_{R_{e,v}}\hat{V}_m,~ \mathbf{H}_{e,v}(n) = \mathbf{H}_e(n) ~\forall n \in [1..k]$ where $n$ is the $n^{th}$ EKF sample time. Therefore, this virtual frame is solved as an initial value problem between two EKF sampling times and acts like an intermediate trajectory for the manipulator between these sampled points. The control law used is, 
-\begin{align} \label{eq_VS_law}
- \hat{V}_m = K_1 \mathbb{E}(H_{e,v}^{-1}H_{e,des})
-\end{align}
-where $k_{1,ii} > 0, ~\forall~ i \in [1...6]$, $\mathbb{E}$ is the pose error function defined as, $\mathbb{E}(\mathbf{H}(R,p)) = \begin{bmatrix}p^T& \psi^T\end{bmatrix}^T$, with the rotation error $\psi = \frac{1}{2}[R - R^T]^\vee$ and $[a_\times]^\vee = a, ~a\in \mathbb{R}^6$ is the mapping from skew symmetric matrix to vector form. A note on this error formulation and subsequent Lyapunov function analysis can be found in \cite{BULLO199917}. The PBVS command in eq.~\eqref{eq_VS_law} implies that $\hat{V}_m$ is referred in the virtual frame.
-}
+\rek{In accordance to fig.~\ref{fig:blockdiagram}, a kinematic tracking velocity for the manipulator is generated using the visual servo law. Firstly, the reference trajectory is used to compute a desired end-effector pose $\mathbf{H}_{e,des} = (\mathbf{H}_e\hat{\mathbf{H}}_{eg}) \mathbf{H}_{ge,ref}$. Secondly, this function is used as a pose error to construct the visual servo law $\hat{\dot{\mathbf{x}}}_e =\begin{bmatrix}\dot{r}_e^T  &\omega_e^T\end{bmatrix}^T$. Using the slow-sampled $\hat{\dot{\mathbf{x}}}_e$, a virtual frame is generated by integrating $\dot{\mathbf{H}}_{e,v}(R_{e,v},p_{e,v})$. Note here that this virtual frame is solved as an initial value problem between two EKF sampling times and acts like an intermediate trajectory for the manipulator between these sampled points. This is initialized as, $\mathbf{H}_{e,v}(n) = \mathbf{H}_e(n) ~\forall n \in [1..k]$ where $n$ is the $n^{th}$ EKF sample time. The control law used is, 
+\begin{equation} \label{eq_VS_law}
+\begin{split}
+ \hat{\dot{\mathbf{x}}}_e &= K_1 e_{pose}(H_{e,v},~H_{e,des}) + \mathbf{v}_t\\
+ \mathbf{v}_t &= \begin{bmatrix}\hat{\dot{r}} \\ R(\hat{\mu})\hat{\omega}^b \end{bmatrix}
+ \end{split}
+\end{equation}
+where $k_{1,ii} > 0, ~\forall~ i \in [1...6]$, $e_{pose}$ is the pose error function defined as, $e_{pose}(H_1,H_2) = \begin{bmatrix}(p_1-p_2)^T& \psi(R_1^TR_2)^T\end{bmatrix}^T$, with the rotation error $\psi(R) = \frac{1}{2}[R - R^T]^\vee$ and $[a_\times]^\vee = a, ~a\in \mathbb{R}^6$ is the mapping from skew symmetric matrix to vector form. $\mathbf{v}_t$ is simply the estimated Target velocity applied as a feed-forward. A note on this error formulation and subsequent Lyapunov function analysis can be found in \cite{BULLO199917}.}
 
 \rek{
-Finally, a compliant controller is placed in cascade after the visual servo which acts upon the Cartesian error. The impedance error is a Cartesian error observed in the inertial frame and is denoted as $\mathbf{e} = \mathbb{E}(\mathbf{H}_e^{-1}\mathbf{H}_{e,des})$. Using the corresponding velocity error $\dot{\mathbf{e}}$, a PD+ Cartesian control law is formulated as,
+Finally, a compliant controller is placed in cascade after the visual servo which acts upon the Cartesian error. The impedance error is a Cartesian error observed in the inertial frame and is denoted as $\mathbf{e} = e_{pose}(\mathbf{H}_{e,des},\mathbf{H}_e)$. Using the corresponding velocity error $\dot{\mathbf{e}}$, a PD+ Cartesian control law is formulated as,
 
 \begin{align}
-\mathbf{\mathcal{F}}_m = \mathbf{\Lambda}_m(\mathbf{q},\mathbf{x}_b)\dot{\hat{V}}_m + \mathbf{\mu}_m(\mathbf{q},\dot{\mathbf{q}},\mathbf{x}_b,\dot{\mathbf{x}}_b){\hat{V}}_m - \mathbf{K}_P\mathbf{e} - \mathbf{K}_D\dot{\mathbf{e}}
+\mathbf{\mathcal{F}}_m = \mathbf{\Lambda}_m(\mathbf{q},\mathbf{x}_b) \hat{\ddot{\mathbf{x}}}_e + \mathbf{\mu}_m(\mathbf{q},\dot{\mathbf{q}},\mathbf{x}_b,\dot{\mathbf{x}}_b) \hat{\dot{\mathbf{x}}}_e - \mathbf{K}_P\mathbf{e} - \mathbf{K}_D\dot{\mathbf{e}}
 \end{align}
 where $k_{P,ii} > 0$ and $k_{D,ii} > 0, ~\forall~ i \in [1...6]$ are the choices for Cartesian stiffness and damping terms respectively.}
 The corresponding joint torques with null-space control torque $\mathbf{\Gamma}$ are given as,

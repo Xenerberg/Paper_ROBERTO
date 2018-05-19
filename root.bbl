@@ -135,20 +135,15 @@ D.~N. Nenchev and K.~Yoshida, ``Impact analysis and post-impact motion control
   issues of a free-floating space robot subject to a force impulse,'' {\em IEEE
   Transactions on Robotics and Automation}, vol.~15, pp.~548--557, Jun 1999.
 
-\bibitem{Khatib}
-O.~Khatib, ``A unified approach for motion and force control of robot
-  manipulators: The operational space formulation,'' {\em IEEE Journal on
-  Robotics and Automation}, vol.~3, pp.~43--53, February 1987.
-
-\bibitem{BULLO199917}
-F.~Bullo and R.~M. Murray, ``{Tracking for fully actuated mechanical systems: a
-  geometric framework},'' {\em Automatica}, vol.~35, no.~1, pp.~17--34, 1999.
-
 \bibitem{Ott}
 C.~Ott, A.~Kugi, and Y.~Nakamura, ``Resolving the problem of non-integrability
   of nullspace velocities for compliance control of redundant manipulators by
   using semi-definite lyapunov functions,'' in {\em 2008 IEEE International
   Conference on Robotics and Automation}, pp.~1999--2004, May 2008.
+
+\bibitem{BULLO199917}
+F.~Bullo and R.~M. Murray, ``{Tracking for fully actuated mechanical systems: a
+  geometric framework},'' {\em Automatica}, vol.~35, no.~1, pp.~17--34, 1999.
 
 \bibitem{Paden}
 B.~Paden and R.~Panja, ``Global asymptotically stable pd+ controller for robot

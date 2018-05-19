@@ -85,7 +85,7 @@ The tracking controller for the rigidization phase is described in Fig.~\ref{fig
 \rek{
 \begin{equation}
 \begin{split}
-\MatO{\tau}{}_{rig} =& \hat{\mathbf{M}}_{m,t}(\mathbf{q},\mathbf{x}_b)\ddot{q}_{r} +  \tilde{\mathbf{C}}_{m,t}(\mathbf{q},\dot{\mathbf{q}},\mathbf{x}_b,\dot{\mathbf{x}}_b)(q,\dot{q})\dot{q}_{r}\\ &+ \MatO{K}{}_{p} (q_{r}-q) + \MatO{K}{}_{d} (\dot{q}{}_{r}-\dot{q})
+\MatO{\tau}{}_{rig} =& \hat{\mathbf{M}}_{m,t}(\mathbf{q},\mathbf{x}_b)\ddot{\mathbf{q}}_{r} +  \tilde{\mathbf{C}}_{m,t}(\mathbf{q},\dot{\mathbf{q}},\mathbf{x}_b,\dot{\mathbf{x}}_b)\dot{\mathbf{q}}_{r}\\ &+ \MatO{K}{}_{p} (\mathbf{q}_{r}-\mathbf{q}) + \MatO{K}{}_{d} (\dot{\mathbf{q}}{}_{r}-\dot{\mathbf{q}})
 \label{eq:rigidiz_control}
 \end{split}
 \end{equation}}
@@ -174,7 +174,7 @@ Fig.~\ref{fig:joint_space_motion_2subplots} shows the measured robot manipulator
 
 Returning to Fig.~\ref{fig:joint_space_motion_2subplots}, the error in the joint position is shown to improve substantially for the second case, due to the fact that the EKF and the joint motion parameterization shown in Fig.~\ref{fig:Joint_vel_2degs} is used (the manuever was not possible without these new features). While the first provides a smoother estimate of $\MatO{H}{}_{ge}$ (as shown below), the latter reduces the pixel velocity by a factor of two. At the point of transition between the tracking and the rigidization phase ($t=18.5$), the joint position error becomes zero, due to the recomputation of the reference trajectory (see Section\ref{sec:rigidization}). The tracking error in the rigidization phase is then shown to remain small.
 
-In Figures~\ref{fig:fig_norm_errors} the output error norm of the position $r_c$ of EKF and vision is compared with respect to the ground truth. The EKF error norm is represented as a function  of $\chi^2$ of the incoming vision data. It is observed that the $\chi^2$ measure degrades for $t > 0 $ and $||r_c|| \rightarrow 0 $. In Fig.~\ref{fig:fig_norm_errors}, the degradation of vision data culminates in measurement failures towards the end. The EKF estimates though stay bounded. Fig.~\ref{fig:states_EKF} shows the velocity convergence of the filter. It also demonstrates the orientation degradation as $||r_c|| \rightarrow 0$. This observation betrays a general problem with the eye-in-hand configuration of visual servoing, since, in close proximity to target, the observability degeneracy degrades camera-based measurement. The EKF is computationally efficient owing to the three parameter, quaternion-propagation instead of 4. 
+In Figures~\ref{fig:fig_norm_errors} the output error norm of the position $r_c$ of EKF and vision is compared with respect to the ground truth. The EKF error norm is plotted as a heat-map of the statistical metrix, $\chi^2$ of the incoming vision data. It is observed that the $\chi^2$ measure degrades (yellow) for $t > 0 $ and $||r_c|| \rightarrow 0 $. In Fig.~\ref{fig:fig_norm_errors}, the degradation of vision data culminates in measurement failures (marked as rectangular area) towards the end. The EKF estimates though stay bounded. Fig.~\ref{fig:states_EKF} shows the velocity convergence of the filter. It also demonstrates the orientation degradation as $||r_c|| \rightarrow 0$. This observation betrays a general problem with the eye-in-hand configuration of visual servoing, since, in close proximity to target, the observability degeneracy degrades camera-based measurement. 
 %
 \begin{figure}[t!]
 \psfrag{y1}[cc][cc][\FontFigB]{$||\Delta r_c||^2$}
